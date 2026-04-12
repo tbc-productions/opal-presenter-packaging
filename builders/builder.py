@@ -332,7 +332,7 @@ class Builder(object):
         """
         self._print('Running PyInstaller...')
         os.chdir(self.work_path)
-        cmd = ['pyinstaller'
+        cmd = ['pyinstaller',
                '--clean',
                '--noconfirm',
                '--windowed',
