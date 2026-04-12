@@ -1,0 +1,10 @@
+__pycache__
+*.pyc
+config.ini
+*.spec
+.flatpak-builder
+flatpak-pip-generator
+*.flatpak
+python3-requirements.json
+repo
+.DS_Store
