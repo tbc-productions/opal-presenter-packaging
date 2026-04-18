@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Upload a single asset to a Gitea release, replacing any existing asset with
 # the same filename. Required env: CI_TOKEN, RELEASE_REPO, RELEASE_ID,
-# GITHUB_SERVER_URL. Optional env: GITEA_ORIGIN_IP - if set, curl will be
-# forced to connect to that IP while presenting the original Host/SNI,
-# bypassing any HTTP proxy (e.g. Cloudflare body-size limits) in front of
-# Gitea. The origin must still serve TLS for the Gitea hostname.
+# GITHUB_SERVER_URL. Optional env: GITEA_ORIGIN_IP - if set, curl will
+# tunnel the HTTP connection directly to that address (supports "IP" or
+# "IP:PORT") while keeping the configured host/SNI, bypassing any HTTP
+# proxy (e.g. Cloudflare body-size limits). TLS verification is disabled
+# on the bypass path since the origin cert usually won't match.
 set -euo pipefail
 
 asset_path="${1:?usage: upload-release-asset.sh <path>}"
@@ -15,22 +16,29 @@ asset_name="$(basename "$asset_path")"
 : "${RELEASE_ID:?RELEASE_ID is required}"
 : "${GITHUB_SERVER_URL:?GITHUB_SERVER_URL is required}"
 
-resolve_args=()
+bypass_args=()
 if [ -n "${GITEA_ORIGIN_IP:-}" ]; then
   host="${GITHUB_SERVER_URL#*://}"
   host="${host%%/*}"
   case "$GITHUB_SERVER_URL" in
-    https://*) port=443 ;;
-    http://*)  port=80 ;;
-    *)         port=443 ;;
+    https://*) url_port=443 ;;
+    http://*)  url_port=80 ;;
+    *)         url_port=443 ;;
   esac
-  resolve_args=(--resolve "${host}:${port}:${GITEA_ORIGIN_IP}")
-  echo "Bypassing proxy via --resolve ${host}:${port}:${GITEA_ORIGIN_IP}"
+  if [[ "$GITEA_ORIGIN_IP" == *:* ]]; then
+    origin_ip="${GITEA_ORIGIN_IP%:*}"
+    origin_port="${GITEA_ORIGIN_IP##*:}"
+  else
+    origin_ip="$GITEA_ORIGIN_IP"
+    origin_port="$url_port"
+  fi
+  bypass_args=(--connect-to "${host}:${url_port}:${origin_ip}:${origin_port}" -k)
+  echo "Bypassing proxy via ${host}:${url_port} -> ${origin_ip}:${origin_port} (TLS verification disabled)"
 fi
 
 base="${GITHUB_SERVER_URL}/api/v1/repos/${RELEASE_REPO}/releases/${RELEASE_ID}/assets"
 
-existing_id=$(curl -fsSL "${resolve_args[@]}" \
+existing_id=$(curl -fsSL "${bypass_args[@]}" \
   -H "Authorization: token ${CI_TOKEN}" \
   "$base" \
   | jq -r --arg name "$asset_name" '.[] | select(.name == $name) | .id' \
@@ -38,13 +46,13 @@ existing_id=$(curl -fsSL "${resolve_args[@]}" \
 
 if [ -n "$existing_id" ]; then
   echo "Deleting existing asset $asset_name (id=$existing_id)"
-  curl -fsSL "${resolve_args[@]}" -X DELETE \
+  curl -fsSL "${bypass_args[@]}" -X DELETE \
     -H "Authorization: token ${CI_TOKEN}" \
     "$base/$existing_id"
 fi
 
 echo "Uploading $asset_path"
-curl -fsSL "${resolve_args[@]}" -X POST \
+curl -fsSL "${bypass_args[@]}" -X POST \
   -H "Authorization: token ${CI_TOKEN}" \
   -H "Content-Type: application/octet-stream" \
   --data-binary "@$asset_path" \
