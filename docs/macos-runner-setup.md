@@ -122,6 +122,23 @@ The `:host` suffix tells act_runner to execute steps directly on macOS (not
 inside a Docker container). This is mandatory for PyInstaller because it
 needs to build against the real macOS SDK and frameworks.
 
+Also replace the placeholder `runner.envs` block with a writable tool-cache
+path, so `actions/setup-python@v5` (and any other action that uses the hosted
+tool cache) doesn't try to create `/Users/runner/hostedtoolcache`:
+
+```yaml
+runner:
+  envs:
+    RUNNER_TOOL_CACHE: /Users/<you>/actions-runner/_tool
+    AGENT_TOOLSDIRECTORY: /Users/<you>/actions-runner/_tool
+```
+
+Then create the directory:
+
+```bash
+mkdir -p ~/actions-runner/_tool
+```
+
 ---
 
 ## 6. Smoke-test in the foreground

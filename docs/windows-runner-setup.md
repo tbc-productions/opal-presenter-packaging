@@ -103,6 +103,23 @@ runner:
 The `:host` suffix tells act_runner to execute steps directly on the Windows
 host (not inside a Docker container). This is what PyInstaller needs.
 
+Also replace the placeholder `runner.envs` block with a writable tool-cache
+path, so `actions/setup-python@v5` (and any other action that uses the hosted
+tool cache) doesn't try to create `C:\Users\runneradmin\hostedtoolcache`:
+
+```yaml
+runner:
+  envs:
+    RUNNER_TOOL_CACHE: C:\actions-runner\_tool
+    AGENT_TOOLSDIRECTORY: C:\actions-runner\_tool
+```
+
+Then create the directory:
+
+```powershell
+New-Item -ItemType Directory -Force -Path C:\actions-runner\_tool | Out-Null
+```
+
 ---
 
 ## 6. Smoke-test in the foreground
