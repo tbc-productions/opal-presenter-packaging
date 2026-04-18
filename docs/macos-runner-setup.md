@@ -248,7 +248,7 @@ INFO Runner: mymac-macos, ..., is online and listening
 1. On Gitea: `<your-org>/openlp-packaging` → *Actions* → *Build OpenLP+* →
    *Run workflow* → leave inputs blank → *Run*.
 2. Watch the `build-macos` job. It should go **Queued → Running** as soon as
-   the Synology runner finishes `prepare-source`.
+   the Linux runner finishes `prepare-source`.
 3. Tail `~/actions-runner/runner.log` to see the job executing locally.
 
 ---

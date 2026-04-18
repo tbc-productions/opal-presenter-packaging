@@ -17,6 +17,10 @@ on:
         description: "Create an openlp-packaging release with the artifacts"
         required: false
         default: "true"
+      build_flatpak:
+        description: "Also build the Flatpak (requires a runner labelled flatpak-builder)"
+        required: false
+        default: "false"
 
 env:
   PLUS_REPO: tbcproductions/openlp-plus
@@ -25,7 +29,7 @@ env:
 jobs:
   prepare-source:
     name: Prepare merged source tree
-    runs-on: synology-runner
+    runs-on: ubuntu-latest
     container:
       image: alpine:3.20
     outputs:
@@ -124,7 +128,8 @@ jobs:
   build-flatpak:
     name: Build Flatpak (Linux)
     needs: prepare-source
-    runs-on: synology-runner
+    if: ${{ github.event.inputs.build_flatpak == 'true' || github.event.client_payload.build_flatpak == true }}
+    runs-on: flatpak-builder
     container:
       image: bilelmoussaoui/flatpak-github-actions:gnome-46
       options: --privileged
@@ -261,7 +266,7 @@ jobs:
     name: Publish openlp-packaging release
     needs: [prepare-source, build-flatpak, build-macos, build-windows]
     if: always() && needs.prepare-source.result == 'success' && (github.event_name == 'repository_dispatch' || github.event.inputs.create_release == 'true')
-    runs-on: synology-runner
+    runs-on: ubuntu-latest
     container:
       image: alpine:3.20
     steps:

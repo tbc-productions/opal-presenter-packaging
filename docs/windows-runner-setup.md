@@ -212,7 +212,7 @@ and the service status should be `Running`.
 1. On Gitea: `<your-org>/openlp-packaging` → *Actions* → *Build OpenLP+* →
    *Run workflow* → leave inputs blank → *Run*.
 2. Watch the `build-windows` job. It should go **Queued → Running** as soon
-   as the Synology runner finishes `prepare-source`.
+   as the Linux runner finishes `prepare-source`.
 3. Tail `C:\actions-runner\runner.log` to see the job executing locally.
 
 ---
