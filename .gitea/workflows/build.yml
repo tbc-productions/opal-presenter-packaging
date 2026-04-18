@@ -186,6 +186,7 @@ jobs:
         shell: bash
         run: |
           python builders/windows-builder.py \
+            --verbose \
             --release "${{ needs.prepare-source.outputs.plus_tag }}" \
             --skip-update \
             --config windows/config-gitlab.ini \

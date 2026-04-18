@@ -257,10 +257,16 @@ class WindowsBuilder(Builder):
                              namespaces={'wix': 'http://schemas.microsoft.com/wix/2006/wi'})[0]
         for component_id in component_ids:
             feature.append(E.ComponentRef(Id=component_id))
-        self._print_verbose('Writing new WiX file')
+        wxs_path = os.path.join(config_dir, 'OpenLP.wxs')
+        self._print_verbose('Writing new WiX file to %s', wxs_path)
         tree = ElementTree(root)
-        with open(os.path.join(config_dir, 'OpenLP.wxs'), 'wb') as f:
+        with open(wxs_path, 'wb') as f:
             tree.write(f, encoding='utf-8', xml_declaration=True, pretty_print=True)
+            f.flush()
+            os.fsync(f.fileno())
+        if not os.path.isfile(wxs_path):
+            raise Exception('WiX file was not created at {}'.format(wxs_path))
+        self._print_verbose('WiX file written (%s bytes)', os.path.getsize(wxs_path))
 
     def _run_wix_tools(self):
         """
@@ -276,9 +282,14 @@ class WindowsBuilder(Builder):
             self._print_verbose('Removing old MSI file')
             os.unlink(msi_file)
         config_dir = os.path.dirname(self.config_path)
+        wxs_path = os.path.join(config_dir, 'OpenLP.wxs')
+        if not os.path.isfile(wxs_path):
+            raise Exception('WiX source not found at {} (directory contents: {})'.format(
+                wxs_path, os.listdir(config_dir) if os.path.isdir(config_dir) else '<dir missing>'))
+        self._print_verbose('Compiling WiX source %s (%s bytes)', wxs_path, os.path.getsize(wxs_path))
         os.chdir(self.dist_path)
         self._run_command([self.candle_exe, '-ext', 'WiXUtilExtension', '-ext', 'WixUIExtension',
-                           '-ext', 'WixFirewallExtension', os.path.join(config_dir, 'OpenLP.wxs')],
+                           '-ext', 'WixFirewallExtension', wxs_path],
                           'Error running WiX tool: candle')
         self._run_command([self.light_exe, '-ext', 'WiXUtilExtension', '-ext', 'WixUIExtension',
                            '-ext', 'WixFirewallExtension', '-sice:ICE60', '-sice:ICE61', 'OpenLP.wixobj',
