@@ -10,7 +10,7 @@ on:
         required: false
         default: ""
       create_release:
-        description: "Create an openlp-packaging release with the artifacts"
+        description: "Attach artifacts to the release on the configured repo (see .gitea/release-repo)"
         required: false
         default: "true"
       build_macos:
@@ -40,13 +40,29 @@ jobs:
       version: ${{ steps.resolve.outputs.version }}
       release_tag: ${{ steps.release.outputs.release_tag }}
       release_id: ${{ steps.release.outputs.release_id }}
+      release_existed: ${{ steps.release.outputs.release_existed }}
+      release_repo: ${{ steps.target.outputs.release_repo }}
       create_release: ${{ steps.release.outputs.create_release }}
     steps:
       - name: Install tooling
         run: |
           apt-get update
           apt-get install -y --no-install-recommends \
-            curl jq ca-certificates
+            curl jq ca-certificates git
+
+      - name: Check out packaging repo
+        uses: actions/checkout@v4
+
+      - name: Load release target
+        id: target
+        run: |
+          set -e
+          REPO=$(tr -d '[:space:]' < .gitea/release-repo)
+          if [ -z "$REPO" ]; then
+            echo "::error::.gitea/release-repo is empty"
+            exit 1
+          fi
+          echo "release_repo=$REPO" | tee -a "$GITHUB_OUTPUT"
 
       - name: Resolve tag
         id: resolve
@@ -61,41 +77,62 @@ jobs:
           echo "plus_tag=$PLUS_TAG"    | tee -a "$GITHUB_OUTPUT"
           echo "version=${PLUS_TAG#v}" | tee -a "$GITHUB_OUTPUT"
 
-      - name: Create draft release
+      - name: Resolve or create release
         id: release
         env:
           CI_TOKEN: ${{ secrets.CI_TOKEN }}
           PLUS_TAG: ${{ steps.resolve.outputs.plus_tag }}
+          RELEASE_REPO: ${{ steps.target.outputs.release_repo }}
         run: |
           set -e
           CREATE_RELEASE="${{ github.event_name == 'repository_dispatch' && 'true' || github.event.inputs.create_release }}"
           echo "create_release=$CREATE_RELEASE" | tee -a "$GITHUB_OUTPUT"
           if [ "$CREATE_RELEASE" != "true" ]; then
-            echo "Release creation disabled, skipping"
+            echo "Release handling disabled, skipping"
             exit 0
           fi
 
-          TAG="build-${PLUS_TAG}-$(date -u +%Y%m%d%H%M%S)"
+          HTTP=$(curl -sS -o /tmp/release.json -w '%{http_code}' \
+            -H "Authorization: token ${CI_TOKEN}" \
+            "${GITHUB_SERVER_URL}/api/v1/repos/${RELEASE_REPO}/releases/tags/${PLUS_TAG}")
+
+          if [ "$HTTP" = "200" ]; then
+            RELEASE_ID=$(jq -r .id /tmp/release.json)
+            echo "Reusing existing release $RELEASE_ID at tag ${PLUS_TAG}"
+            echo "release_tag=${PLUS_TAG}"     | tee -a "$GITHUB_OUTPUT"
+            echo "release_id=$RELEASE_ID"      | tee -a "$GITHUB_OUTPUT"
+            echo "release_existed=true"        | tee -a "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "$HTTP" != "404" ]; then
+            echo "::error::Unexpected HTTP $HTTP looking up release at tag ${PLUS_TAG}"
+            cat /tmp/release.json || true
+            exit 1
+          fi
+
+          echo "No existing release for tag ${PLUS_TAG}, creating draft"
           NAME="OpenLP+ ${PLUS_TAG}"
           BODY=$(jq -n \
-            --arg tag "$TAG" \
+            --arg tag "$PLUS_TAG" \
             --arg name "$NAME" \
             --arg body "Built from openlp-plus @ ${PLUS_TAG}." \
-            '{tag_name:$tag, name:$name, body:$body, draft:true, prerelease:false, target_commitish:"main"}')
+            '{tag_name:$tag, name:$name, body:$body, draft:true, prerelease:false}')
 
           RELEASE_ID=$(curl -fsSL -X POST \
             -H "Authorization: token ${CI_TOKEN}" \
             -H "Content-Type: application/json" \
             -d "$BODY" \
-            "${GITHUB_SERVER_URL}/api/v1/repos/${GITHUB_REPOSITORY}/releases" | jq -r .id)
+            "${GITHUB_SERVER_URL}/api/v1/repos/${RELEASE_REPO}/releases" | jq -r .id)
 
-          echo "release_tag=$TAG"       | tee -a "$GITHUB_OUTPUT"
-          echo "release_id=$RELEASE_ID" | tee -a "$GITHUB_OUTPUT"
+          echo "release_tag=${PLUS_TAG}" | tee -a "$GITHUB_OUTPUT"
+          echo "release_id=$RELEASE_ID"  | tee -a "$GITHUB_OUTPUT"
+          echo "release_existed=false"   | tee -a "$GITHUB_OUTPUT"
 
   build-flatpak:
     name: Build Flatpak (Linux)
     needs: prepare-source
-    if: ${{ github.event.inputs.build_flatpak == 'true' || github.event.client_payload.build_flatpak == true }}
+    if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.build_flatpak == 'true') || (github.event_name == 'repository_dispatch' && github.event.client_payload.build_flatpak == true) }}
     runs-on: flatpak-builder
     container:
       image: bilelmoussaoui/flatpak-github-actions:gnome-46
@@ -127,18 +164,14 @@ jobs:
         env:
           CI_TOKEN: ${{ secrets.CI_TOKEN }}
           RELEASE_ID: ${{ needs.prepare-source.outputs.release_id }}
+          RELEASE_REPO: ${{ needs.prepare-source.outputs.release_repo }}
         run: |
           set -e
           shopt -s nullglob
           found=0
           for asset in flatpak/*.flatpak; do
             found=1
-            echo "Uploading $asset"
-            curl -fsSL -X POST \
-              -H "Authorization: token ${CI_TOKEN}" \
-              -H "Content-Type: application/octet-stream" \
-              --data-binary "@$asset" \
-              "${GITHUB_SERVER_URL}/api/v1/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?name=$(basename "$asset")"
+            bash .gitea/scripts/upload-release-asset.sh "$asset"
           done
           if [ "$found" = "0" ]; then
             echo "::warning::No Flatpak assets found in flatpak/"
@@ -192,18 +225,14 @@ jobs:
         env:
           CI_TOKEN: ${{ secrets.CI_TOKEN }}
           RELEASE_ID: ${{ needs.prepare-source.outputs.release_id }}
+          RELEASE_REPO: ${{ needs.prepare-source.outputs.release_repo }}
         run: |
           set -e
           shopt -s nullglob
           found=0
           for asset in source/dist/*.dmg; do
             found=1
-            echo "Uploading $asset"
-            curl -fsSL -X POST \
-              -H "Authorization: token ${CI_TOKEN}" \
-              -H "Content-Type: application/octet-stream" \
-              --data-binary "@$asset" \
-              "${GITHUB_SERVER_URL}/api/v1/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?name=$(basename "$asset")"
+            bash .gitea/scripts/upload-release-asset.sh "$asset"
           done
           if [ "$found" = "0" ]; then
             echo "::warning::No macOS assets found in source/dist/"
@@ -259,18 +288,14 @@ jobs:
         env:
           CI_TOKEN: ${{ secrets.CI_TOKEN }}
           RELEASE_ID: ${{ needs.prepare-source.outputs.release_id }}
+          RELEASE_REPO: ${{ needs.prepare-source.outputs.release_repo }}
         run: |
           set -e
           shopt -s nullglob
           found=0
           for asset in source/dist/*.msi source/dist/*.exe; do
             found=1
-            echo "Uploading $asset"
-            curl -fsSL -X POST \
-              -H "Authorization: token ${CI_TOKEN}" \
-              -H "Content-Type: application/octet-stream" \
-              --data-binary "@$asset" \
-              "${GITHUB_SERVER_URL}/api/v1/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?name=$(basename "$asset")"
+            bash .gitea/scripts/upload-release-asset.sh "$asset"
           done
           if [ "$found" = "0" ]; then
             echo "::warning::No Windows assets found in source/dist/"
@@ -298,6 +323,8 @@ jobs:
         env:
           CI_TOKEN: ${{ secrets.CI_TOKEN }}
           RELEASE_ID: ${{ needs.prepare-source.outputs.release_id }}
+          RELEASE_REPO: ${{ needs.prepare-source.outputs.release_repo }}
+          RELEASE_EXISTED: ${{ needs.prepare-source.outputs.release_existed }}
           MACOS_RESULT: ${{ needs.build-macos.result }}
           WINDOWS_RESULT: ${{ needs.build-windows.result }}
         run: |
@@ -307,11 +334,16 @@ jobs:
             [ "$r" = "success" ] && ANY_SUCCESS=1
           done
 
+          if [ "$RELEASE_EXISTED" = "true" ]; then
+            echo "Release $RELEASE_ID already existed; leaving it untouched"
+            exit 0
+          fi
+
           if [ "$ANY_SUCCESS" = "0" ]; then
             echo "::warning::No builds succeeded - deleting draft release $RELEASE_ID"
             curl -fsSL -X DELETE \
               -H "Authorization: token ${CI_TOKEN}" \
-              "${GITHUB_SERVER_URL}/api/v1/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}"
+              "${GITHUB_SERVER_URL}/api/v1/repos/${RELEASE_REPO}/releases/${RELEASE_ID}"
             exit 0
           fi
 
@@ -320,5 +352,5 @@ jobs:
             -H "Authorization: token ${CI_TOKEN}" \
             -H "Content-Type: application/json" \
             -d '{"draft":false}' \
-            "${GITHUB_SERVER_URL}/api/v1/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" \
+            "${GITHUB_SERVER_URL}/api/v1/repos/${RELEASE_REPO}/releases/${RELEASE_ID}" \
             | jq -r '"Release URL: \(.html_url)"'
