@@ -188,7 +188,7 @@ jobs:
           python builders/windows-builder.py \
             --release "${{ needs.prepare-source.outputs.plus_tag }}" \
             --skip-update \
-            --config windows/config-gitlab.ini \
+            --config windows/config-gitea.ini \
             --branch "$(pwd)/source" \
             --portable
 

@@ -23,6 +23,14 @@ Install these on the Windows machine:
   for MSI creation)
 - **Visual C++ Build Tools** — for any native Python wheels that might compile:
   `winget install Microsoft.VisualStudio.2022.BuildTools`
+- **PortableApps.com Launcher** and **PortableApps.com Installer** — required
+  when the workflow passes `--portable` (it does by default). Download and run
+  the installers from <https://portableapps.com/apps/development>; accept the
+  default install location so they land in
+  `C:\Program Files (x86)\PortableApps.comLauncher\` and
+  `C:\Program Files (x86)\PortableApps.comInstaller\` — which is what
+  `windows/config-gitea.ini` expects. If you install elsewhere, edit that
+  config's `[executables]` section to match.
 
 If you don't have Chocolatey:
 
@@ -364,6 +372,14 @@ wrappers act_runner writes to `C:\...\act\workflow\<n>.ps1`. Apply the
 ExecutionPolicy change in **step 1b** (`Set-ExecutionPolicy -Scope
 LocalMachine -ExecutionPolicy RemoteSigned -Force`) and restart the
 service.
+
+### `PortableApps.com Launcher was not found at the configured path`
+The PortableApps Launcher and/or Installer aren't installed where
+`windows/config-gitea.ini` is looking for them. Install both tools from
+<https://portableapps.com/apps/development> with the default install
+location (`C:\Program Files (x86)\PortableApps.com*`), or edit the
+`[executables]` section of `windows/config-gitea.ini` to point at wherever
+you put them.
 
 ### `candle.exe : error CNDL0103` / `light.exe` can't find files
 The workspace is under `C:\Windows\System32\config\systemprofile\.cache`

@@ -247,12 +247,17 @@ class Builder(object):
         """
         self._print_verbose('Executables:')
         for executable in self.config.options('executables'):
-            path = self.config.get('executables', executable)
-            if not path.strip():
+            raw = self.config.get('executables', executable)
+            if not raw.strip():
                 path = None
             else:
-                path = _which(path)
+                path = _which(raw)
+                if path is None:
+                    self._print(
+                        'WARNING: configured executable {exe!r} at {raw!r} was not found; '
+                        'steps depending on it will fail.'.format(exe=executable, raw=raw))
             setattr(self, '{exe}_exe'.format(exe=executable), path)
+            setattr(self, '{exe}_exe_configured'.format(exe=executable), raw)
             self._print_verbose('   {exe:.<20} {path}'.format(exe=executable + ': ', path=path))
 
     def setup_paths(self):

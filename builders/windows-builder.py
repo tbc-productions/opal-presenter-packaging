@@ -337,6 +337,14 @@ class WindowsBuilder(Builder):
         3  Builds the PortableApps Install
         """
         self._print('Running PortableApps Builder...')
+        for attr, friendly in (('portablelauncher', 'PortableApps.com Launcher'),
+                               ('portableinstaller', 'PortableApps.com Installer')):
+            if getattr(self, '{}_exe'.format(attr)) is None:
+                raise Exception(
+                    '{} was not found at the configured path ({}). Install it on the '
+                    'runner (see docs/windows-runner-setup.md), or adjust the '
+                    '[executables] section of the config file in use.'.format(
+                        friendly, getattr(self, '{}_exe_configured'.format(attr), '<unset>')))
         self._print_verbose('... Clearing old files')
         # Remove previous contents of portableapp build directory.
         if os.path.exists(self.portable_dest_path):
