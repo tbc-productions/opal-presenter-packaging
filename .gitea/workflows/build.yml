@@ -166,16 +166,16 @@ jobs:
           token: ${{ secrets.CI_TOKEN }}
 
       - name: Stamp version file
-        shell: 'powershell -ExecutionPolicy Bypass -Command ". ''{0}''"'
+        shell: bash
         run: |
-          Set-Content -Path "source/openlp/.version" -Value "${{ needs.prepare-source.outputs.version }}" -NoNewline -Encoding ascii
+          printf '%s' "${{ needs.prepare-source.outputs.version }}" > source/openlp/.version
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.14'
 
       - name: Install runtime deps
-        shell: 'powershell -ExecutionPolicy Bypass -Command ". ''{0}''"'
+        shell: bash
         run: |
           python -m pip install --upgrade pip
           python -m pip install pyinstaller pyodbc pypiwin32
@@ -183,13 +183,13 @@ jobs:
           python -m pip install -e 'source/.[darkstyle,mysql,odbc,postgresql,spellcheck,sword-bibles]'
 
       - name: Run Windows builder
-        shell: 'powershell -ExecutionPolicy Bypass -Command ". ''{0}''"'
+        shell: bash
         run: |
-          python builders/windows-builder.py `
-            --release "${{ needs.prepare-source.outputs.plus_tag }}" `
-            --skip-update `
-            --config windows/config-gitlab.ini `
-            --branch "$((Get-Location).Path)\source" `
+          python builders/windows-builder.py \
+            --release "${{ needs.prepare-source.outputs.plus_tag }}" \
+            --skip-update \
+            --config windows/config-gitlab.ini \
+            --branch "$(pwd)/source" \
             --portable
 
       - name: Upload Windows artifact

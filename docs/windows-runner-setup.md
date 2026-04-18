@@ -32,6 +32,53 @@ Set-ExecutionPolicy Bypass -Scope Process -Force
 iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 ```
 
+### 1a. Put Git Bash on the machine `PATH`
+
+The `build-windows` job uses `shell: bash` (via Git for Windows), which means
+`bash.exe` must be resolvable from the service account's `PATH`. Git for
+Windows installs `bash.exe` at `C:\Program Files\Git\bin\bash.exe` but only
+adds `C:\Program Files\Git\cmd` to `PATH` by default.
+
+Append both the `bin` and `usr\bin` directories (the latter brings POSIX
+helpers like `printf`, `tar`, `grep`) to the **machine** `PATH` so the
+LocalSystem-ish service account inherits them:
+
+```powershell
+$extra = @(
+    'C:\Program Files\Git\bin',
+    'C:\Program Files\Git\usr\bin'
+)
+$current = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+foreach ($dir in $extra) {
+    if ($current -notlike "*$dir*") { $current = "$current;$dir" }
+}
+[Environment]::SetEnvironmentVariable('Path', $current, 'Machine')
+```
+
+You'll need to restart the runner service (see step 7e) after changing this.
+
+### 1b. Relax the machine PowerShell ExecutionPolicy
+
+act_runner writes each step's script as a `.ps1` wrapper and asks PowerShell
+to dot-source it. The default `Restricted` policy on Windows Server / fresh
+client installs refuses to load those wrappers, producing errors such as:
+
+```
+. : File C:\...\act\workflow\2.ps1 cannot be loaded because running scripts
+is disabled on this system.
+```
+
+Set the machine policy to `RemoteSigned` once:
+
+```powershell
+Set-ExecutionPolicy -Scope LocalMachine -ExecutionPolicy RemoteSigned -Force
+```
+
+`RemoteSigned` allows local (runner-authored) scripts to run while still
+requiring signatures on scripts downloaded from the internet. If your
+organisation forbids even that, use `Set-ExecutionPolicy -Scope LocalMachine
+-ExecutionPolicy Bypass -Force` — but only on a dedicated build machine.
+
 ---
 
 ## 2. Get a registration token from Gitea
@@ -270,6 +317,19 @@ Restart-Service gitea-actions-runner
 ### Node.js / Python / choco installs aren't found during a job
 The service is running as `LocalSystem`. Switch to your user account (step
 7c) and restart the service.
+
+### `Cannot find: bash in PATH`
+Git Bash isn't on the machine `PATH`. Run the snippet in **step 1a** to add
+`C:\Program Files\Git\bin` (and `usr\bin`) to the machine `PATH`, then
+`Restart-Service gitea-actions-runner`. The service needs a restart before
+it picks up the new environment.
+
+### `running scripts is disabled on this system` / `NativeCommandFailed`
+Both symptoms come from PowerShell refusing to load the `.ps1` step
+wrappers act_runner writes to `C:\...\act\workflow\<n>.ps1`. Apply the
+ExecutionPolicy change in **step 1b** (`Set-ExecutionPolicy -Scope
+LocalMachine -ExecutionPolicy RemoteSigned -Force`) and restart the
+service.
 
 ### Signing / permissions prompts during the build
 The first interactive run may prompt; once approved the service runs
