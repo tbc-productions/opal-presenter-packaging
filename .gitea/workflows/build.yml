@@ -31,7 +31,7 @@ env:
 
 jobs:
   prepare-source:
-    name: Prepare openlp-plus source tree
+    name: Resolve openlp-plus tag
     runs-on: ubuntu-latest
     container:
       image: node:20-bookworm-slim
@@ -43,7 +43,7 @@ jobs:
         run: |
           apt-get update
           apt-get install -y --no-install-recommends \
-            curl jq tar gzip git ca-certificates
+            curl jq ca-certificates
 
       - name: Resolve tag
         id: resolve
@@ -58,30 +58,6 @@ jobs:
           echo "plus_tag=$PLUS_TAG"    | tee -a "$GITHUB_OUTPUT"
           echo "version=${PLUS_TAG#v}" | tee -a "$GITHUB_OUTPUT"
 
-      - name: Check out openlp-plus at tag
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ env.PLUS_REPO }}
-          ref: ${{ steps.resolve.outputs.plus_tag }}
-          path: source/openlp-plus
-          fetch-depth: 0
-          token: ${{ secrets.CI_TOKEN }}
-
-      - name: Stamp version file
-        run: |
-          echo -n "${{ steps.resolve.outputs.version }}" > source/openlp-plus/openlp/.version
-
-      - name: Archive source
-        run: |
-          tar -C source/openlp-plus -czf openlp-source.tar.gz .
-
-      - name: Upload source artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: openlp-source
-          path: openlp-source.tar.gz
-          retention-days: 2
-
   build-flatpak:
     name: Build Flatpak (Linux)
     needs: prepare-source
@@ -94,15 +70,17 @@ jobs:
       - name: Check out packaging repo
         uses: actions/checkout@v4
 
-      - name: Download source
-        uses: actions/download-artifact@v3
+      - name: Check out openlp-plus at tag
+        uses: actions/checkout@v4
         with:
-          name: openlp-source
+          repository: ${{ env.PLUS_REPO }}
+          ref: ${{ needs.prepare-source.outputs.plus_tag }}
+          path: source
+          token: ${{ secrets.CI_TOKEN }}
 
-      - name: Extract source
+      - name: Stamp version file
         run: |
-          mkdir -p source
-          tar -xzf openlp-source.tar.gz -C source
+          echo -n "${{ needs.prepare-source.outputs.version }}" > source/openlp/.version
 
       - name: Build Flatpak
         run: |
@@ -128,15 +106,17 @@ jobs:
       - name: Check out packaging repo
         uses: actions/checkout@v4
 
-      - name: Download source
-        uses: actions/download-artifact@v3
+      - name: Check out openlp-plus at tag
+        uses: actions/checkout@v4
         with:
-          name: openlp-source
+          repository: ${{ env.PLUS_REPO }}
+          ref: ${{ needs.prepare-source.outputs.plus_tag }}
+          path: source
+          token: ${{ secrets.CI_TOKEN }}
 
-      - name: Extract source
+      - name: Stamp version file
         run: |
-          mkdir -p source
-          tar -xzf openlp-source.tar.gz -C source
+          echo -n "${{ needs.prepare-source.outputs.version }}" > source/openlp/.version
 
       - uses: actions/setup-python@v5
         with:
@@ -178,16 +158,18 @@ jobs:
       - name: Check out packaging repo
         uses: actions/checkout@v4
 
-      - name: Download source
-        uses: actions/download-artifact@v3
+      - name: Check out openlp-plus at tag
+        uses: actions/checkout@v4
         with:
-          name: openlp-source
+          repository: ${{ env.PLUS_REPO }}
+          ref: ${{ needs.prepare-source.outputs.plus_tag }}
+          path: source
+          token: ${{ secrets.CI_TOKEN }}
 
-      - name: Extract source
+      - name: Stamp version file
         shell: 'powershell -ExecutionPolicy Bypass -Command ". ''{0}''"'
         run: |
-          New-Item -ItemType Directory -Force -Path source | Out-Null
-          tar -xzf openlp-source.tar.gz -C source
+          Set-Content -Path source/openlp/.version -Value "${{ needs.prepare-source.outputs.version }}" -NoNewline -Encoding ASCII
 
       - uses: actions/setup-python@v5
         with:

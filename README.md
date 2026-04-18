@@ -57,9 +57,12 @@ build from an upstream trigger.
 
 ### Jobs
 
-- `prepare-source` — resolves the tag, checks out `openlp-plus` at
-  that ref, stamps `openlp/.version`, and uploads the tree as the
-  `openlp-source` artifact. Runs in `alpine:3.20`.
+- `prepare-source` — resolves which `openlp-plus` tag to build (from
+  the dispatch payload, workflow input, or the latest release API)
+  and exposes it as `plus_tag` / `version` outputs. Runs in
+  `node:20-bookworm-slim`. Each platform build job checks out the
+  source tree itself from the resolved tag, so there's no source
+  artifact round-trip.
 - `build-flatpak` — builds the Flatpak bundle. Off by default.
 - `build-macos` — installs Python 3.12, runtime deps via Homebrew,
   then runs `builders/macos-builder.py` to produce a `.dmg`.
