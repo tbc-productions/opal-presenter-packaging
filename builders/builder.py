@@ -385,8 +385,16 @@ class Builder(object):
             if self.args.tag_override:
                 self.version = self.args.tag_override
             else:
-                # This is a development build, get the version info based on tags
-                git_version = self._git('describe', self.branch_path, ['--tags'], err_msg='Error running git describe')
+                # This is a development build, get the version info based on tags.
+                # Shallow checkouts (e.g. actions/checkout without fetch-tags) won't
+                # have any tags to describe against, so fall back to 0.0.0 instead
+                # of aborting the whole build.
+                try:
+                    git_version = self._git('describe', self.branch_path, ['--tags'],
+                                            err_msg='Error running git describe')
+                except Exception as exc:
+                    self._print('Warning: git describe failed ({0}); falling back to 0.0.0'.format(exc))
+                    git_version = ''
                 if not git_version or len(git_version.strip()) == 0:
                     self.version = '0.0.0'
                 else:

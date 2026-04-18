@@ -69,11 +69,25 @@ jobs:
         env:
           CI_TOKEN: ${{ secrets.CI_TOKEN }}
         run: |
+          set -euo pipefail
           PLUS_TAG="${{ github.event.client_payload.tag || github.event.inputs.openlp_tag || '' }}"
           if [ -z "$PLUS_TAG" ]; then
-            PLUS_TAG="$(curl -fsSL -H "Authorization: token ${CI_TOKEN}" \
-              "${GITHUB_SERVER_URL}/api/v1/repos/${PLUS_REPO}/releases/latest" | jq -r .tag_name)"
+            echo "No tag supplied, asking ${PLUS_REPO} for its latest release"
+            HTTP=$(curl -sS -o /tmp/latest.json -w '%{http_code}' \
+              -H "Authorization: token ${CI_TOKEN}" \
+              "${GITHUB_SERVER_URL}/api/v1/repos/${PLUS_REPO}/releases/latest")
+            if [ "$HTTP" != "200" ]; then
+              echo "::error::Could not query ${PLUS_REPO}/releases/latest (HTTP $HTTP)"
+              cat /tmp/latest.json || true
+              exit 1
+            fi
+            PLUS_TAG="$(jq -r '.tag_name // empty' /tmp/latest.json)"
           fi
+          if [ -z "$PLUS_TAG" ] || [ "$PLUS_TAG" = "null" ]; then
+            echo "::error::Failed to resolve an openlp-plus tag. Re-run the workflow with a non-empty 'openlp_tag' input, or publish a release on ${PLUS_REPO}."
+            exit 1
+          fi
+          echo "Resolved openlp-plus tag: $PLUS_TAG"
           echo "plus_tag=$PLUS_TAG"    | tee -a "$GITHUB_OUTPUT"
           echo "version=${PLUS_TAG#v}" | tee -a "$GITHUB_OUTPUT"
 
@@ -148,6 +162,8 @@ jobs:
           ref: ${{ needs.prepare-source.outputs.plus_tag }}
           path: source
           token: ${{ secrets.CI_TOKEN }}
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Stamp version file
         run: |
@@ -194,6 +210,8 @@ jobs:
           ref: ${{ needs.prepare-source.outputs.plus_tag }}
           path: source
           token: ${{ secrets.CI_TOKEN }}
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Stamp version file
         run: |
@@ -256,6 +274,8 @@ jobs:
           ref: ${{ needs.prepare-source.outputs.plus_tag }}
           path: source
           token: ${{ secrets.CI_TOKEN }}
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Stamp version file
         shell: bash
