@@ -165,6 +165,7 @@ jobs:
           CI_TOKEN: ${{ secrets.CI_TOKEN }}
           RELEASE_ID: ${{ needs.prepare-source.outputs.release_id }}
           RELEASE_REPO: ${{ needs.prepare-source.outputs.release_repo }}
+          GITEA_ORIGIN_IP: ${{ secrets.GITEA_ORIGIN_IP }}
         run: |
           set -e
           shopt -s nullglob
@@ -226,6 +227,7 @@ jobs:
           CI_TOKEN: ${{ secrets.CI_TOKEN }}
           RELEASE_ID: ${{ needs.prepare-source.outputs.release_id }}
           RELEASE_REPO: ${{ needs.prepare-source.outputs.release_repo }}
+          GITEA_ORIGIN_IP: ${{ secrets.GITEA_ORIGIN_IP }}
         run: |
           set -e
           shopt -s nullglob
@@ -289,6 +291,7 @@ jobs:
           CI_TOKEN: ${{ secrets.CI_TOKEN }}
           RELEASE_ID: ${{ needs.prepare-source.outputs.release_id }}
           RELEASE_REPO: ${{ needs.prepare-source.outputs.release_repo }}
+          GITEA_ORIGIN_IP: ${{ secrets.GITEA_ORIGIN_IP }}
         run: |
           set -e
           shopt -s nullglob
