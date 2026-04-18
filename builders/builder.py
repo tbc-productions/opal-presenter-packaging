@@ -290,7 +290,7 @@ class Builder(object):
         else:
             self.version = None
         if self.args.release and self.args.can_export:
-            self.work_path = os.path.abspath(os.path.join(self.branch_path, '..', 'OpenLP-' + self.version))
+            self.work_path = os.path.abspath(os.path.join(self.branch_path, '..', 'OpenLP+-' + self.version))
         else:
             self.work_path = self.branch_path
         self.openlp_script = os.path.abspath(os.path.join(self.work_path, 'openlp', '__main__.py'))

@@ -29,7 +29,7 @@ For this script to work out of the box, it depends on a number of things:
 Python 3.12
 
 PySide6
-    You should already have this installed, OpenLP doesn't work without it. The
+    You should already have this installed, OpenLP+ doesn't work without it. The
     version the script expects is the packaged one available from pypi.
 
 PyEnchant
@@ -46,14 +46,14 @@ PyInstaller
 Git
     You need the command line "git" client installed.
 
-OpenLP
+OpenLP+
     A checkout of the latest code, in a branch directory, which is in a Bazaar
     shared repository directory. This means your code should be in a directory
     structure like this: "openlp\\branch-name".
 
 windows-builder.py
     This script, of course. It should be in the "windows-installer" directory
-    at the same level as OpenLP trunk.
+    at the same level as the OpenLP+ source tree.
 
 Mako
     Mako Templates for Python.  This package is required for building the
@@ -65,7 +65,7 @@ Mako
 
 Portable App Builds
     The following are required if you are planning to make a portable build of
-    OpenLP.  The portable build conforms to the standards published by
+    OpenLP+.  The portable build conforms to the standards published by
     PortableApps.com:
 
         http://portableapps.com/development/portableapps.com_format
@@ -198,11 +198,11 @@ class WindowsBuilder(Builder):
                                                            Protocol='udp', Scope='any'))
                     component.append(E.Shortcut(Id='ApplicationStartMenuShortcut', Name='$(var.ProductName)',
                                                 Description='$(var.Description)', Directory='ProgramMenuDir',
-                                                Icon='OpenLP.ico', Advertise='yes', WorkingDirectory='INSTALLDIR'))
+                                                Icon='OpenLPPlus.ico', Advertise='yes', WorkingDirectory='INSTALLDIR'))
                     component.append(E.Shortcut(Id='DebugStartMenuShortcut', Name='$(var.ProductName) (Debug)',
                                                 Description='Run $(var.ProductName) with debug logging enabled',
                                                 Directory='ProgramMenuDir', Arguments='--log-level debug',
-                                                Icon='OpenLP.ico', Advertise='yes', WorkingDirectory='INSTALLDIR'))
+                                                Icon='OpenLPPlus.ico', Advertise='yes', WorkingDirectory='INSTALLDIR'))
                     component.append(E.ProgId(
                         E.Extension(
                             E.Verb(Id="Open", Command="Open", Argument=" &quot;%1&quot;"),
@@ -230,7 +230,7 @@ class WindowsBuilder(Builder):
         self._print('Creating WiX file...')
         config_dir = os.path.dirname(self.config_path)
         self._print_verbose('Reading base WiX file')
-        with open(os.path.join(config_dir, 'OpenLP-base.wxs'), 'rt') as base_file:
+        with open(os.path.join(config_dir, 'OpenLPPlus-base.wxs'), 'rt') as base_file:
             xml = base_file.read()
         if '.dev' in self.version:
             windows_version = self.version.replace('.dev', '.')
@@ -266,7 +266,7 @@ class WindowsBuilder(Builder):
                              namespaces={'wix': 'http://schemas.microsoft.com/wix/2006/wi'})[0]
         for component_id in component_ids:
             feature.append(E.ComponentRef(Id=component_id))
-        wxs_path = os.path.join(config_dir, 'OpenLP.wxs')
+        wxs_path = os.path.join(config_dir, 'OpenLPPlus.wxs')
         self._print_verbose('Writing new WiX file to %s', wxs_path)
         tree = ElementTree(root)
         with open(wxs_path, 'wb') as f:
@@ -291,7 +291,7 @@ class WindowsBuilder(Builder):
             self._print_verbose('Removing old MSI file')
             os.unlink(msi_file)
         config_dir = os.path.dirname(self.config_path)
-        wxs_path = os.path.join(config_dir, 'OpenLP.wxs')
+        wxs_path = os.path.join(config_dir, 'OpenLPPlus.wxs')
         if not os.path.isfile(wxs_path):
             raise Exception('WiX source not found at {} (directory contents: {})'.format(
                 wxs_path, os.listdir(config_dir) if os.path.isdir(config_dir) else '<dir missing>'))
@@ -301,7 +301,7 @@ class WindowsBuilder(Builder):
                            '-ext', 'WixFirewallExtension', wxs_path],
                           'Error running WiX tool: candle')
         self._run_command([self.light_exe, '-ext', 'WiXUtilExtension', '-ext', 'WixUIExtension',
-                           '-ext', 'WixFirewallExtension', '-sice:ICE60', '-sice:ICE61', 'OpenLP.wixobj',
+                           '-ext', 'WixFirewallExtension', '-sice:ICE60', '-sice:ICE61', 'OpenLPPlus.wixobj',
                            '-o', msi_file],
                           'Error running WiX tool: light')
 
@@ -359,8 +359,8 @@ class WindowsBuilder(Builder):
         if os.path.exists(self.portable_dest_path):
             rmtree(self.portable_dest_path)
         self._print_verbose('... Creating PortableApps build directory')
-        # Copy the contents of the OpenLPPortable directory to the portable
-        # build directory.
+        # Copy the contents of the OpenLPPlusPortable template into the
+        # portable build directory.
         dir_util.copy_tree(self.portable_source_path, self.portable_dest_path)
         self._create_portableapp_structure()
         self._create_portableapps_appinfo_file()
@@ -384,7 +384,7 @@ class WindowsBuilder(Builder):
         if len(matches) > 1:
             self._print_verbose('Multiple .paf.exe found, using {}'.format(built_paf))
         slug = self.filename_version_slug()
-        final_portable = 'OpenLP-{}-{}-portable.exe'.format(slug, self.arch)
+        final_portable = 'OpenLP+-{}-{}-portable.exe'.format(slug, self.arch)
         dest = os.path.join(self.dist_path, '..', final_portable)
         self._print_verbose('... Portable build: {} -> {}'.format(built_paf, dest))
         move(built_paf, dest)
@@ -422,7 +422,7 @@ class WindowsBuilder(Builder):
         Add extra arguments to the command line argument parser
         """
         parser.add_argument('--portable', action='store_true', default=False,
-                            help='Build a PortableApps.com build of OpenLP too')
+                            help='Build a PortableApps.com build of OpenLP+ too')
 
     def setup_system_paths(self):
         """
@@ -505,8 +505,8 @@ class WindowsBuilder(Builder):
         Copy all the Windows-specific files.
         """
         self._print('Copying extra files for Windows...')
-        self._print_verbose('... OpenLP.ico')
-        copy(self.icon_path, os.path.join(self.dist_path, 'OpenLP.ico'))
+        self._print_verbose('... OpenLPPlus.ico')
+        copy(self.icon_path, os.path.join(self.dist_path, 'OpenLPPlus.ico'))
         self._print_verbose('... LICENSE.txt')
         copy(self.license_path, os.path.join(self.dist_path, 'LICENSE.txt'))
         self._print_verbose('... service_file.ico')

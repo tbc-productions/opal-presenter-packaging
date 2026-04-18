@@ -16,9 +16,9 @@
     <Condition Message="You need to be an administrator to install this product.">Privileged</Condition>
     <Media Id="1" Cabinet="OpenLPPlus.cab" EmbedCab="yes" CompressionLevel="high"/>
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />
-    <Property Id="ARPPRODUCTICON" Value="OpenLP.ico" />
+    <Property Id="ARPPRODUCTICON" Value="OpenLPPlus.ico" />
     <UIRef Id="WixUI_Common" />
-    <UI Id="WixUI_OpenLP">
+    <UI Id="WixUI_OpenLPPlus">
       <TextStyle Id="WixUI_Font_Normal" FaceName="Tahoma" Size="8" />
       <TextStyle Id="WixUI_Font_Bigger" FaceName="Tahoma" Size="12" />
       <TextStyle Id="WixUI_Font_Title" FaceName="Tahoma" Size="9" Bold="yes" />
@@ -69,10 +69,10 @@
           <Component Id="ProgramMenuDir" Guid="{7AABE54C-5B03-4049-AA85-E18B787A19C7}">
             <RemoveFolder Id="ProgramMenuDir" On="uninstall" />
             <RegistryValue Root="HKCU" Key="Software\$(var.ProductName)\$(var.ProductName)" Type="string" Value="" KeyPath="yes" />
-            <util:InternetShortcut Id="OpenLPWebSite"
+            <util:InternetShortcut Id="OpenLPPlusWebSite"
               Name="$(var.ProductName) on the Web"
               Target="http://openlp.org/"/>
-            <util:InternetShortcut Id="OpenLPForums"
+            <util:InternetShortcut Id="OpenLPPlusForums"
               Name="Get support for $(var.ProductName)"
               Target="http://forums.openlp.org/"/>
             <Shortcut Id="UninstallProduct"             
@@ -89,7 +89,7 @@
       ConfigurableDirectory="INSTALLDIR" AllowAdvertise="no" InstallDefault="local" Absent="disallow">
       <ComponentRef Id="ProgramMenuDir"/>
     </Feature>
-    <Icon Id="OpenLP.ico" SourceFile="OpenLP.ico"/>
+    <Icon Id="OpenLPPlus.ico" SourceFile="OpenLPPlus.ico"/>
     <Icon Id="service_file.ico" SourceFile="service_file.ico"/>
     <Upgrade Id="$(var.UpgradeCode)">
       <UpgradeVersion Minimum="$(var.ProductVersion)" IncludeMinimum="no" OnlyDetect="yes"

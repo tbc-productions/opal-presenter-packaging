@@ -1,6 +1,6 @@
 #!/bin/bash
 ###############################################################################
-# PPA Build Script for OpenLP                                                 #
+# PPA Build Script for OpenLP+                                                #
 ###############################################################################
 
 RELEASE_NAME=$1
@@ -17,11 +17,11 @@ export DEBEMAIL="raoul@snyman.info"
 
 echo -n "Copying source tarball..."
 cd $UPLOADS_DIR
-if [[ ! -f "$UPLOADS_DIR/OpenLP-${OPENLP_VERSION}.tar.gz" ]]; then
-	echo "$UPLOADS_DIR/OpenLP-${OPENLP_VERSION}.tar.gz NOT FOUND, exiting."
+if [[ ! -f "$UPLOADS_DIR/OpenLP+-${OPENLP_VERSION}.tar.gz" ]]; then
+	echo "$UPLOADS_DIR/OpenLP+-${OPENLP_VERSION}.tar.gz NOT FOUND, exiting."
 	exit 1
 fi
-cp $UPLOADS_DIR/OpenLP-${OPENLP_VERSION}.tar.gz $TARGT_TARBALL
+cp $UPLOADS_DIR/OpenLP+-${OPENLP_VERSION}.tar.gz $TARGT_TARBALL
 echo done.
 echo -n "Backing up changelog..."
 cd $UBUNTU_DIR

@@ -1,12 +1,12 @@
 #!/bin/bash
 ###############################################################################
-# Debian Build Script for OpenLP                                              #
+# Debian Build Script for OpenLP+                                             #
 ###############################################################################
 DEB_VERSION=$1
 RELEASE_NAME=$2
 export RELEASE_NAME
 ROOT_DIR=~/Projects/OpenLP
-SDIST_TARBALL=$ROOT_DIR/release-${DEB_VERSION}/dist/OpenLP-$DEB_VERSION.tar.gz
+SDIST_TARBALL=$ROOT_DIR/release-${DEB_VERSION}/dist/OpenLP+-$DEB_VERSION.tar.gz
 TARGT_TARBALL=$ROOT_DIR/tarballs/openlp_$DEB_VERSION.orig.tar.gz
 echo "Copying $SDIST_TARBALL to $TARGT_TARBALL"
 cp $SDIST_TARBALL $TARGT_TARBALL

@@ -50,7 +50,7 @@ For example:
 
 
 If you're running this outside of GitLab, you'll need te generate a private token for yourself, get the project ID of
-the OpenLP repository, and run the script the following way:
+the OpenLP+ repository, and run the script the following way:
 
 .. code::
 
@@ -156,7 +156,7 @@ def download_and_get_hash(version_url: str) -> str:
 
 def update_appdata_xml(releases: list[tuple]) -> bool:
     """Update the releases in the appdata XML"""
-    appdata_file = get_base_path().joinpath('flatpak', 'org.openlp.OpenLP.appdata.xml')
+    appdata_file = get_base_path().joinpath('flatpak', 'org.tbcproductions.OpenLPPlus.appdata.xml')
     el = objectify.E
     with appdata_file.open('r') as fd:
         xml = objectify.parse(fd)
@@ -175,11 +175,11 @@ def update_appdata_xml(releases: list[tuple]) -> bool:
 def update_build_yml(version: str, version_url: str, sha256_hash: str) -> bool:
     """Build the YAML file needed to build the flatpak"""
     yaml = get_yaml()
-    build_file = get_base_path().joinpath('flatpak', 'org.openlp.OpenLP.yml')
+    build_file = get_base_path().joinpath('flatpak', 'org.tbcproductions.OpenLPPlus.yml')
     with build_file.open('r') as fd:
         openlp_yml = yaml.load(fd)
     for module in openlp_yml['modules']:
-        if isinstance(module, dict) and module['name'] == 'OpenLP':
+        if isinstance(module, dict) and module['name'] == 'OpenLPPlus':
             for source in module['sources']:
                 if source['type'] == 'archive':
                     source['url'] = version_url
@@ -200,10 +200,11 @@ def build_flatpak(version: str, bundle: str):
     if result.returncode != 0:
         return False
     result = run(['flatpak-builder', '--user', '--install', '--force-clean', '--repo=repo', 'build',
-                  'org.openlp.OpenLP.yml'], cwd=str(base_path / 'flatpak'))
+                  'org.tbcproductions.OpenLPPlus.yml'], cwd=str(base_path / 'flatpak'))
     if result.returncode != 0:
         return False
-    result = run(['flatpak', 'build-bundle', 'repo', f'openlp-{version}-{bundle}.flatpak', 'org.openlp.OpenLP'],
+    result = run(['flatpak', 'build-bundle', 'repo', f'OpenLP+-{version}-{bundle}.flatpak',
+                  'org.tbcproductions.OpenLPPlus'],
                  cwd=str(base_path / 'flatpak'))
     if result.returncode != 0:
         return False

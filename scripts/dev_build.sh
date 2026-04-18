@@ -5,11 +5,11 @@ PROJECTS_DIR=/home/openlp/Projects
 SOURCE_DIR=$PROJECTS_DIR/OpenLP/trunk
 RELEASE_DIR=release-$VERSION
 UPLOADS_DIR=/home/openlp/Projects/OpenLP/Uploads
-FILENAME=OpenLP-$VERSION.tar.gz
+FILENAME=OpenLP+-$VERSION.tar.gz
 #TSDIR=$RELEASE/resources/i18n
 #QMDIR=$RELEASE/openlp/i18n
 
-echo Starting the OpenLP Development Build Script
+echo Starting the OpenLP+ Development Build Script
 echo --------------------------------------------
 echo -ne "Updating trunk...\r"
 cd $SOURCE_DIR
@@ -39,4 +39,4 @@ cd /home/openlp/Projects/OpenLP
 rm -r $RELEASE_DIR
 echo "done."
 echo --------------------------------------------
-echo Finished the OpenLP Development Build Script
+echo Finished the OpenLP+ Development Build Script

@@ -1,13 +1,13 @@
 <?xml version='1.0' encoding='utf8'?>
 <component type="desktop-application">
-  <id>org.openlp.OpenLP</id>
-  <launchable type="desktop-id">org.openlp.OpenLP.desktop</launchable>
+  <id>org.tbcproductions.OpenLPPlus</id>
+  <launchable type="desktop-id">org.tbcproductions.OpenLPPlus.desktop</launchable>
   <metadata_license>CC0-1.0</metadata_license>
-  <name>OpenLP</name>
-  <summary>OpenLP - Church presentation software</summary>
+  <name>OpenLP+</name>
+  <summary>OpenLP+ - Church presentation software</summary>
   <description>
     <p>
-      OpenLP is a free and open source cross-platform presentation tool
+      OpenLP+ is a free and open source cross-platform presentation tool
       useful for churches. It provides presentation features for songs,
       scriptures, media and more.
       NOTE: This distribution does not provide LibreOffice integration.
@@ -32,9 +32,9 @@
     <release version="3.1.1-1" date="2024-03-10"/>
     <release version="2.9.1-1" date="2020-05-30"/>
   </releases>
-  <project_group>OpenLP</project_group>
+  <project_group>OpenLP+</project_group>
   <project_license>GPL-3.0+</project_license>
-  <developer_name>OpenLP et al.</developer_name>
+  <developer_name>OpenLP+ Contributors</developer_name>
   <update_contact/>
   <screenshots>
     <screenshot type="default">

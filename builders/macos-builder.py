@@ -30,7 +30,7 @@ For this script to work out of the box, it depends on a number of things:
 Python 3.14.4
 
 PySide6
-    You should already have this installed, OpenLP doesn't work without it. The
+    You should already have this installed, OpenLP+ doesn't work without it. The
     version the script expects is the packaged one available from River Bank
     Computing.
 
@@ -44,21 +44,21 @@ PyInstaller
 Git
     You need the command line "git" client installed.
 
-OpenLP
+OpenLP+
     A checkout of the latest code, in a branch directory, which is in a Bazaar
     shared repository directory. This means your code should be in a directory
     structure like this: "openlp\branch-name".
 
 macos-builder.py
     This script, of course. It should be in the "macos-package" directory
-    at the same level as OpenLP trunk.
+    at the same level as the OpenLP+ source tree.
 
 Mako
     Mako Templates for Python.  This package is required for building the
     remote plugin.
 
 Alembic
-    Required for upgrading the databases used in OpenLP.
+    Required for upgrading the databases used in OpenLP+.
 
 config.ini.default
     The configuration file contains settings of the version string to include
@@ -391,7 +391,7 @@ class MacOSBuilder(Builder):
         self._print('Creating dmg file...')
         arch = platform.machine()
         ver_slug = self.filename_version_slug()
-        dmg_name = f'OpenLP-{ver_slug}-{arch}.dmg'
+        dmg_name = f'OpenLP+-{ver_slug}-{arch}.dmg'
         dmg_title = f'OpenLP+ {ver_slug}'
 
         self.dmg_file = os.path.join(self.work_path, 'dist', dmg_name)
