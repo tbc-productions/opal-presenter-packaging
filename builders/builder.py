@@ -165,6 +165,19 @@ class Builder(object):
         except InvalidVersion:
             return None
 
+    def filename_version_slug(self) -> str:
+        """
+        Short release label for archive filenames (no leading *v*, PEP 440 base only).
+        """
+        raw = (self.version or '').strip()
+        if len(raw) > 1 and raw[0].lower() == 'v' and (raw[1].isdigit() or raw[1] == '.'):
+            raw = raw[1:].strip()
+        pep440 = self.parse_pep440_version(raw)
+        if pep440 is not None:
+            return str(pep440.base_version)
+        base = raw.split('+')[0].strip()
+        return base if base else '0.0.0'
+
     def get_platform(self):
         """
         Return the platform we're building for

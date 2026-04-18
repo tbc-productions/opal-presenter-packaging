@@ -376,15 +376,19 @@ class WindowsBuilder(Builder):
         self._print_verbose('... Building PortableApps Installer')
         self._run_command([self.portableinstaller_exe, self.portable_dest_path],
                           'Error running PortableApps Installer')
-        portable_exe_name = 'OpenLPPlusPortable_{ver}-{arch}.paf.exe'.format(
-            ver=self.portable_version, arch=self.arch)
-        portable_exe_path = os.path.abspath(os.path.join(self.portable_dest_path, '..', portable_exe_name))
-        self._print_verbose('... Portable Build: {}'.format(portable_exe_path))
-        if os.path.exists(portable_exe_path):
-            move(portable_exe_path, os.path.join(self.dist_path, '..', portable_exe_name))
-            self._print('PortableApp build complete')
-        else:
-            raise Exception('PortableApp failed to build')
+        parent = os.path.dirname(os.path.abspath(self.portable_dest_path))
+        matches = sorted(glob.glob(os.path.join(parent, '*.paf.exe')))
+        if not matches:
+            raise Exception('PortableApp failed to build: no .paf.exe under {}'.format(parent))
+        built_paf = matches[-1]
+        if len(matches) > 1:
+            self._print_verbose('Multiple .paf.exe found, using {}'.format(built_paf))
+        slug = self.filename_version_slug()
+        final_portable = 'OpenLP-{}-{}-portable.exe'.format(slug, self.arch)
+        dest = os.path.join(self.dist_path, '..', final_portable)
+        self._print_verbose('... Portable build: {} -> {}'.format(built_paf, dest))
+        move(built_paf, dest)
+        self._print('PortableApp build complete')
 
     def get_platform(self):
         """
