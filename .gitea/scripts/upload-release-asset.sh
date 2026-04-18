@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Upload a single asset to a Gitea release, replacing any existing asset with
 # the same filename. Required env: CI_TOKEN, RELEASE_REPO, RELEASE_ID,
-# GITHUB_SERVER_URL. Optional env: GITEA_ORIGIN_IP - if set, curl will
-# tunnel the HTTP connection directly to that address (supports "IP" or
+# GITHUB_SERVER_URL. Optional env: ORIGIN_IP - if set, curl will tunnel
+# the HTTP connection directly to that address (supports "IP" or
 # "IP:PORT") while keeping the configured host/SNI, bypassing any HTTP
 # proxy (e.g. Cloudflare body-size limits). TLS verification is disabled
 # on the bypass path since the origin cert usually won't match.
@@ -17,7 +17,7 @@ asset_name="$(basename "$asset_path")"
 : "${GITHUB_SERVER_URL:?GITHUB_SERVER_URL is required}"
 
 bypass_args=()
-if [ -n "${GITEA_ORIGIN_IP:-}" ]; then
+if [ -n "${ORIGIN_IP:-}" ]; then
   host="${GITHUB_SERVER_URL#*://}"
   host="${host%%/*}"
   case "$GITHUB_SERVER_URL" in
@@ -25,11 +25,11 @@ if [ -n "${GITEA_ORIGIN_IP:-}" ]; then
     http://*)  url_port=80 ;;
     *)         url_port=443 ;;
   esac
-  if [[ "$GITEA_ORIGIN_IP" == *:* ]]; then
-    origin_ip="${GITEA_ORIGIN_IP%:*}"
-    origin_port="${GITEA_ORIGIN_IP##*:}"
+  if [[ "$ORIGIN_IP" == *:* ]]; then
+    origin_ip="${ORIGIN_IP%:*}"
+    origin_port="${ORIGIN_IP##*:}"
   else
-    origin_ip="$GITEA_ORIGIN_IP"
+    origin_ip="$ORIGIN_IP"
     origin_port="$url_port"
   fi
   bypass_args=(--connect-to "${host}:${url_port}:${origin_ip}:${origin_port}" -k)
