@@ -38,6 +38,9 @@ jobs:
     outputs:
       plus_tag: ${{ steps.resolve.outputs.plus_tag }}
       version: ${{ steps.resolve.outputs.version }}
+      release_tag: ${{ steps.release.outputs.release_tag }}
+      release_id: ${{ steps.release.outputs.release_id }}
+      create_release: ${{ steps.release.outputs.create_release }}
     steps:
       - name: Install tooling
         run: |
@@ -57,6 +60,37 @@ jobs:
           fi
           echo "plus_tag=$PLUS_TAG"    | tee -a "$GITHUB_OUTPUT"
           echo "version=${PLUS_TAG#v}" | tee -a "$GITHUB_OUTPUT"
+
+      - name: Create draft release
+        id: release
+        env:
+          CI_TOKEN: ${{ secrets.CI_TOKEN }}
+          PLUS_TAG: ${{ steps.resolve.outputs.plus_tag }}
+        run: |
+          set -e
+          CREATE_RELEASE="${{ github.event_name == 'repository_dispatch' && 'true' || github.event.inputs.create_release }}"
+          echo "create_release=$CREATE_RELEASE" | tee -a "$GITHUB_OUTPUT"
+          if [ "$CREATE_RELEASE" != "true" ]; then
+            echo "Release creation disabled, skipping"
+            exit 0
+          fi
+
+          TAG="build-${PLUS_TAG}-$(date -u +%Y%m%d%H%M%S)"
+          NAME="OpenLP+ ${PLUS_TAG}"
+          BODY=$(jq -n \
+            --arg tag "$TAG" \
+            --arg name "$NAME" \
+            --arg body "Built from openlp-plus @ ${PLUS_TAG}." \
+            '{tag_name:$tag, name:$name, body:$body, draft:true, prerelease:false, target_commitish:"main"}')
+
+          RELEASE_ID=$(curl -fsSL -X POST \
+            -H "Authorization: token ${CI_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "$BODY" \
+            "${GITHUB_SERVER_URL}/api/v1/repos/${GITHUB_REPOSITORY}/releases" | jq -r .id)
+
+          echo "release_tag=$TAG"       | tee -a "$GITHUB_OUTPUT"
+          echo "release_id=$RELEASE_ID" | tee -a "$GITHUB_OUTPUT"
 
   build-flatpak:
     name: Build Flatpak (Linux)
@@ -89,13 +123,27 @@ jobs:
             --branch "$(pwd)/source" \
             "${{ needs.prepare-source.outputs.version }}"
 
-      - name: Upload Flatpak artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: openlp-flatpak
-          path: dist/*.flatpak
-          retention-days: 14
-          if-no-files-found: warn
+      - name: Upload Flatpak assets to release
+        if: ${{ needs.prepare-source.outputs.create_release == 'true' && needs.prepare-source.outputs.release_id != '' }}
+        env:
+          CI_TOKEN: ${{ secrets.CI_TOKEN }}
+          RELEASE_ID: ${{ needs.prepare-source.outputs.release_id }}
+        run: |
+          set -e
+          shopt -s nullglob
+          found=0
+          for asset in dist/*.flatpak; do
+            found=1
+            echo "Uploading $asset"
+            curl -fsSL -X POST \
+              -H "Authorization: token ${CI_TOKEN}" \
+              -H "Content-Type: application/octet-stream" \
+              --data-binary "@$asset" \
+              "${GITHUB_SERVER_URL}/api/v1/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?name=$(basename "$asset")"
+          done
+          if [ "$found" = "0" ]; then
+            echo "::warning::No Flatpak assets found in dist/"
+          fi
 
   build-macos:
     name: Build macOS (.dmg)
@@ -140,13 +188,27 @@ jobs:
             --config macos/config-gitlab.ini \
             --branch "$(pwd)/source"
 
-      - name: Upload macOS artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: openlp-macos
-          path: dist/*.dmg
-          retention-days: 14
-          if-no-files-found: warn
+      - name: Upload macOS assets to release
+        if: ${{ needs.prepare-source.outputs.create_release == 'true' && needs.prepare-source.outputs.release_id != '' }}
+        env:
+          CI_TOKEN: ${{ secrets.CI_TOKEN }}
+          RELEASE_ID: ${{ needs.prepare-source.outputs.release_id }}
+        run: |
+          set -e
+          shopt -s nullglob
+          found=0
+          for asset in dist/*.dmg; do
+            found=1
+            echo "Uploading $asset"
+            curl -fsSL -X POST \
+              -H "Authorization: token ${CI_TOKEN}" \
+              -H "Content-Type: application/octet-stream" \
+              --data-binary "@$asset" \
+              "${GITHUB_SERVER_URL}/api/v1/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?name=$(basename "$asset")"
+          done
+          if [ "$found" = "0" ]; then
+            echo "::warning::No macOS assets found in dist/"
+          fi
 
   build-windows:
     name: Build Windows (.msi / portable)
@@ -192,24 +254,37 @@ jobs:
             --branch "$(pwd)/source" \
             --portable
 
-      - name: Upload Windows artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: openlp-windows
-          path: |
-            dist/*.msi
-            dist/*.exe
-          retention-days: 14
-          if-no-files-found: warn
+      - name: Upload Windows assets to release
+        if: ${{ needs.prepare-source.outputs.create_release == 'true' && needs.prepare-source.outputs.release_id != '' }}
+        shell: bash
+        env:
+          CI_TOKEN: ${{ secrets.CI_TOKEN }}
+          RELEASE_ID: ${{ needs.prepare-source.outputs.release_id }}
+        run: |
+          set -e
+          shopt -s nullglob
+          found=0
+          for asset in dist/*.msi dist/*.exe; do
+            found=1
+            echo "Uploading $asset"
+            curl -fsSL -X POST \
+              -H "Authorization: token ${CI_TOKEN}" \
+              -H "Content-Type: application/octet-stream" \
+              --data-binary "@$asset" \
+              "${GITHUB_SERVER_URL}/api/v1/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?name=$(basename "$asset")"
+          done
+          if [ "$found" = "0" ]; then
+            echo "::warning::No Windows assets found in dist/"
+          fi
 
   publish-release:
     name: Publish openlp-packaging release
-    needs: [prepare-source, build-macos, build-windows]
+    needs: [prepare-source, build-macos, build-windows, build-flatpak]
     if: >-
       always()
       && needs.prepare-source.result == 'success'
-      && (github.event_name == 'repository_dispatch' || github.event.inputs.create_release == 'true')
-      && (needs.build-macos.result == 'success' || needs.build-windows.result == 'success')
+      && needs.prepare-source.outputs.create_release == 'true'
+      && needs.prepare-source.outputs.release_id != ''
     runs-on: ubuntu-latest
     container:
       image: node:20-bookworm-slim
@@ -220,39 +295,32 @@ jobs:
           apt-get install -y --no-install-recommends \
             curl jq ca-certificates
 
-      - name: Download all artifacts
-        uses: actions/download-artifact@v3
-        with:
-          path: artifacts
-
-      - name: Create release and upload assets
+      - name: Finalise or discard draft release
         env:
           CI_TOKEN: ${{ secrets.CI_TOKEN }}
-          PLUS_TAG: ${{ needs.prepare-source.outputs.plus_tag }}
+          RELEASE_ID: ${{ needs.prepare-source.outputs.release_id }}
+          MACOS_RESULT: ${{ needs.build-macos.result }}
+          WINDOWS_RESULT: ${{ needs.build-windows.result }}
+          FLATPAK_RESULT: ${{ needs.build-flatpak.result }}
         run: |
           set -e
-          TAG="build-${PLUS_TAG}-$(date -u +%Y%m%d%H%M%S)"
-          NAME="OpenLP+ ${PLUS_TAG}"
-          BODY=$(jq -n \
-            --arg tag "$TAG" \
-            --arg name "$NAME" \
-            --arg body "Built from openlp-plus @ ${PLUS_TAG}." \
-            '{tag_name:$tag, name:$name, body:$body, draft:false, prerelease:false, target_commitish:"main"}')
+          ANY_SUCCESS=0
+          for r in "$MACOS_RESULT" "$WINDOWS_RESULT" "$FLATPAK_RESULT"; do
+            [ "$r" = "success" ] && ANY_SUCCESS=1
+          done
 
-          RELEASE_ID=$(curl -fsSL -X POST \
+          if [ "$ANY_SUCCESS" = "0" ]; then
+            echo "::warning::No builds succeeded - deleting draft release $RELEASE_ID"
+            curl -fsSL -X DELETE \
+              -H "Authorization: token ${CI_TOKEN}" \
+              "${GITHUB_SERVER_URL}/api/v1/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}"
+            exit 0
+          fi
+
+          echo "Publishing draft release $RELEASE_ID"
+          curl -fsSL -X PATCH \
             -H "Authorization: token ${CI_TOKEN}" \
             -H "Content-Type: application/json" \
-            -d "$BODY" \
-            "${GITHUB_SERVER_URL}/api/v1/repos/${GITHUB_REPOSITORY}/releases" | jq -r .id)
-
-          echo "Release ID: $RELEASE_ID"
-
-          find artifacts -type f \( -name '*.dmg' -o -name '*.msi' -o -name '*.exe' -o -name '*.flatpak' \) \
-            | while read -r asset; do
-            echo "Uploading $asset"
-            curl -fsSL -X POST \
-              -H "Authorization: token ${CI_TOKEN}" \
-              -H "Content-Type: application/octet-stream" \
-              --data-binary "@$asset" \
-              "${GITHUB_SERVER_URL}/api/v1/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?name=$(basename "$asset")"
-          done
+            -d '{"draft":false}' \
+            "${GITHUB_SERVER_URL}/api/v1/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" \
+            | jq -r '"Release URL: \(.html_url)"'
