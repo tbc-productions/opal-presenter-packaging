@@ -495,6 +495,26 @@ class Builder(object):
         self._run_command([self.python, self.i18n_utils, '-qdpu', '-U', username, '-P', password],
                           err_msg='Error running translation_utils.py')
 
+    def _find_pyside6_tool(self, tool_name):
+        """
+        Resolve the path to a PySide6 command line tool (e.g. pyside6-lrelease).
+
+        When running the builder via a virtualenv's python, the associated PySide6 scripts live
+        next to ``sys.executable`` rather than somewhere on ``PATH``. Fall back to ``PATH`` for
+        system-level installs.
+        """
+        exe_name = tool_name
+        if os.name == 'nt' and not tool_name.lower().endswith('.exe'):
+            exe_name = tool_name + '.exe'
+        bin_dir = os.path.dirname(self.python)
+        candidate = os.path.join(bin_dir, exe_name)
+        if os.path.isfile(candidate):
+            return candidate
+        resolved = _which(exe_name)
+        if resolved:
+            return resolved
+        return tool_name
+
     def compile_translations(self):
         """
         Compile the translations for Qt.
@@ -502,12 +522,13 @@ class Builder(object):
         self._print('Compiling translations...')
         if not os.path.exists(os.path.join(self.dist_path, 'i18n')):
             os.makedirs(os.path.join(self.dist_path, 'i18n'))
+        lrelease_exe = self._find_pyside6_tool('pyside6-lrelease')
         for filename in os.listdir(self.i18n_path):
             if filename.endswith('.ts'):
                 self._print_verbose('... %s', filename)
                 source_path = os.path.join(self.i18n_path, filename)
                 dest_path = os.path.join(self.dist_path, 'i18n', filename.replace('.ts', '.qm'))
-                lrelease_command = ('pyside6-lrelease', '-compress', source_path, '-qm', dest_path)
+                lrelease_command = (lrelease_exe, '-compress', source_path, '-qm', dest_path)
                 self._run_command(lrelease_command,
                                   err_msg='Error running lconvert on %s' % source_path)
         self._print('Copying Qt translation files...')

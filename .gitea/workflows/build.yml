@@ -133,6 +133,7 @@ jobs:
         env:
           PYENCHANT_LIBRARY_PATH: /opt/homebrew/lib/libenchant-2.2.dylib
         run: |
+          export PATH="$(pwd)/.venv/bin:/opt/homebrew/opt/python@3.14/bin:/opt/homebrew/opt/icu4c/bin:/opt/homebrew/opt/icu4c/sbin:$PATH"
           .venv/bin/python builders/macos-builder.py \
             --release "${{ needs.prepare-source.outputs.plus_tag }}" \
             --skip-update \
@@ -165,16 +166,16 @@ jobs:
           token: ${{ secrets.CI_TOKEN }}
 
       - name: Stamp version file
-        shell: bash
+        shell: powershell
         run: |
-          printf '%s' "${{ needs.prepare-source.outputs.version }}" > source/openlp/.version
+          Set-Content -Path "source/openlp/.version" -Value "${{ needs.prepare-source.outputs.version }}" -NoNewline -Encoding ascii
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.14'
 
       - name: Install runtime deps
-        shell: bash
+        shell: powershell
         run: |
           python -m pip install --upgrade pip
           python -m pip install pyinstaller pyodbc pypiwin32
@@ -182,13 +183,13 @@ jobs:
           python -m pip install -e 'source/.[darkstyle,mysql,odbc,postgresql,spellcheck,sword-bibles]'
 
       - name: Run Windows builder
-        shell: bash
+        shell: powershell
         run: |
-          python builders/windows-builder.py \
-            --release "${{ needs.prepare-source.outputs.plus_tag }}" \
-            --skip-update \
-            --config windows/config-gitlab.ini \
-            --branch "$(pwd)/source" \
+          python builders/windows-builder.py `
+            --release "${{ needs.prepare-source.outputs.plus_tag }}" `
+            --skip-update `
+            --config windows/config-gitlab.ini `
+            --branch "$((Get-Location).Path)\source" `
             --portable
 
       - name: Upload Windows artifact
