@@ -128,23 +128,12 @@ Press **Ctrl-C** once confirmed.
 
 ## 7. Install as a Windows service (via NSSM)
 
-`act_runner.exe daemon` is a plain console app — it does **not** implement
-the Windows Service Control Manager protocol. Installing it directly with
-`sc.exe create` causes **Error 1503: "The service did not respond to the start
-or control request in a timely fashion"** because SCM never receives a
-`SERVICE_RUNNING` status back and kills the process after 30 seconds.
+`act_runner.exe daemon` is a plain console app and doesn't implement the
+Windows Service Control Manager protocol, so it must be wrapped by a service
+host. [NSSM](https://nssm.cc/) (Non-Sucking Service Manager) is the standard
+tool for this.
 
-The fix is to wrap it with a service wrapper like
-[NSSM](https://nssm.cc/) (Non-Sucking Service Manager).
-
-### 7a. If you already tried `sc.exe create`, remove the broken service
-
-```powershell
-sc.exe stop "gitea-actions-runner"   # ignore "service not running" errors
-sc.exe delete "gitea-actions-runner"
-```
-
-### 7b. Install NSSM
+### 7a. Install NSSM
 
 ```powershell
 choco install nssm -y
@@ -153,7 +142,7 @@ choco install nssm -y
 Or download `nssm.exe` manually from <https://nssm.cc/download> and drop it
 in `C:\Windows\System32\`.
 
-### 7c. Create the service
+### 7b. Create the service
 
 ```powershell
 cd C:\actions-runner
@@ -172,7 +161,7 @@ nssm set gitea-actions-runner AppRotateFiles 1
 nssm set gitea-actions-runner AppRotateBytes 10485760
 ```
 
-### 7d. (Recommended) run as your user account
+### 7c. (Recommended) run as your user account
 
 NSSM defaults to `LocalSystem`, which doesn't see user-installed Python,
 Chocolatey packages on the user PATH, or your developer tools. Switch to your
@@ -185,14 +174,14 @@ nssm set gitea-actions-runner ObjectName ".\YourWindowsUsername" "YourPassword"
 - `.\User` — local account
 - `DOMAIN\User` — domain account
 
-### 7e. Start it
+### 7d. Start it
 
 ```powershell
 nssm start gitea-actions-runner
 # or: Start-Service gitea-actions-runner
 ```
 
-### 7f. Verify it stays running
+### 7e. Verify it stays running
 
 ```powershell
 Get-Service gitea-actions-runner
@@ -230,9 +219,6 @@ and the service status should be `Running`.
 
 ## Troubleshooting
 
-### Error 1503 on service start
-You tried `sc.exe create` without a wrapper. See section 7 — use NSSM.
-
 ### Service starts then stops within seconds
 Check `C:\actions-runner\runner.err`:
 
@@ -260,7 +246,7 @@ Restart-Service gitea-actions-runner
 
 ### Node.js / Python / choco installs aren't found during a job
 The service is running as `LocalSystem`. Switch to your user account (step
-7d) and restart the service.
+7c) and restart the service.
 
 ### Signing / permissions prompts during the build
 The first interactive run may prompt; once approved the service runs
