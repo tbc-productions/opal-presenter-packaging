@@ -184,7 +184,7 @@ jobs:
           name: openlp-source
 
       - name: Extract source
-        shell: pwsh
+        shell: powershell
         run: |
           New-Item -ItemType Directory -Force -Path source | Out-Null
           tar -xzf openlp-source.tar.gz -C source
@@ -194,7 +194,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install runtime deps
-        shell: pwsh
+        shell: powershell
         run: |
           python -m pip install --upgrade pip
           pip install pyinstaller pyodbc pypiwin32
@@ -202,7 +202,7 @@ jobs:
           pip install -e 'source/.[darkstyle,mysql,odbc,postgresql,spellcheck,sword-bibles]'
 
       - name: Run Windows builder
-        shell: pwsh
+        shell: powershell
         run: |
           python builders/windows-builder.py `
             --release "${{ needs.prepare-source.outputs.plus_tag }}" `
