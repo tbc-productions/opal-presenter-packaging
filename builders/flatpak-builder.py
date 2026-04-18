@@ -156,7 +156,7 @@ def download_and_get_hash(version_url: str) -> str:
 
 def update_appdata_xml(releases: list[tuple]) -> bool:
     """Update the releases in the appdata XML"""
-    appdata_file = get_base_path().joinpath('flatpak', 'org.tbcproductions.OpenLPPlus.appdata.xml')
+    appdata_file = get_base_path().joinpath('flatpak', 'net.tbcproductions.OpenLPPlus.appdata.xml')
     el = objectify.E
     with appdata_file.open('r') as fd:
         xml = objectify.parse(fd)
@@ -175,7 +175,7 @@ def update_appdata_xml(releases: list[tuple]) -> bool:
 def update_build_yml(version: str, version_url: str, sha256_hash: str) -> bool:
     """Build the YAML file needed to build the flatpak"""
     yaml = get_yaml()
-    build_file = get_base_path().joinpath('flatpak', 'org.tbcproductions.OpenLPPlus.yml')
+    build_file = get_base_path().joinpath('flatpak', 'net.tbcproductions.OpenLPPlus.yml')
     with build_file.open('r') as fd:
         openlp_yml = yaml.load(fd)
     for module in openlp_yml['modules']:
@@ -200,11 +200,11 @@ def build_flatpak(version: str, bundle: str):
     if result.returncode != 0:
         return False
     result = run(['flatpak-builder', '--user', '--install', '--force-clean', '--repo=repo', 'build',
-                  'org.tbcproductions.OpenLPPlus.yml'], cwd=str(base_path / 'flatpak'))
+                  'net.tbcproductions.OpenLPPlus.yml'], cwd=str(base_path / 'flatpak'))
     if result.returncode != 0:
         return False
     result = run(['flatpak', 'build-bundle', 'repo', f'OpenLPPlus-{version}-{bundle}.flatpak',
-                  'org.tbcproductions.OpenLPPlus'],
+                  'net.tbcproductions.OpenLPPlus'],
                  cwd=str(base_path / 'flatpak'))
     if result.returncode != 0:
         return False

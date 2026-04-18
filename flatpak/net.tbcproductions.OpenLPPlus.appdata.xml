@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf8'?>
 <component type="desktop-application">
-  <id>org.tbcproductions.OpenLPPlus</id>
-  <launchable type="desktop-id">org.tbcproductions.OpenLPPlus.desktop</launchable>
+  <id>net.tbcproductions.OpenLPPlus</id>
+  <launchable type="desktop-id">net.tbcproductions.OpenLPPlus.desktop</launchable>
   <metadata_license>CC0-1.0</metadata_license>
   <name>OpenLP+</name>
   <summary>OpenLP+ - Church presentation software</summary>

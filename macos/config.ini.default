@@ -13,4 +13,4 @@ username =
 password =
 
 [codesigning]
-certificate = org.openlp.OpenLP
+certificate = net.tbcproductions.OpenLPPlus

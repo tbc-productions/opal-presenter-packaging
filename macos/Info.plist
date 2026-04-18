@@ -14,14 +14,14 @@
 				<string>OpenLP.icns</string>
 			</array>
 			<key>CFBundleTypeName</key>
-			<string>OpenLP Service</string>
+			<string>OpenLP+ Service</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSHandlerRank</key>
 			<string>Owner</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>org.openlp.service</string>
+				<string>net.tbcproductions.OpenLPPlus.service</string>
 			</array>
 		</dict>
 		<dict>
@@ -34,14 +34,14 @@
 				<string>OpenLP.icns</string>
 			</array>
 			<key>CFBundleTypeName</key>
-			<string>OpenLP Service</string>
+			<string>OpenLP+ Service</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSHandlerRank</key>
 			<string>Owner</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>org.openlp.servicelite</string>
+				<string>net.tbcproductions.OpenLPPlus.servicelite</string>
 			</array>
 		</dict>
 		<dict>
@@ -54,14 +54,14 @@
 				<string>OpenLP.icns</string>
 			</array>
 			<key>CFBundleTypeName</key>
-			<string>OpenLP Theme</string>
+			<string>OpenLP+ Theme</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSHandlerRank</key>
 			<string>Owner</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>org.openlp.theme</string>
+				<string>net.tbcproductions.OpenLPPlus.theme</string>
 			</array>
 		</dict>
 	</array>
@@ -69,9 +69,9 @@
 	<array>
 		<dict>
 			<key>UTTypeIdentifier</key>
-			<string>org.openlp.osz</string>
+			<string>net.tbcproductions.OpenLPPlus.osz</string>
 			<key>UTTypeDescription</key>
-			<string>OpenLP Service</string>
+			<string>OpenLP+ Service</string>
 			<key>UTTypeConformsTo</key>
 			<array>
 				<string>public.data</string>
@@ -91,9 +91,9 @@
 		</dict>
 		<dict>
 			<key>UTTypeIdentifier</key>
-			<string>org.openlp.otz</string>
+			<string>net.tbcproductions.OpenLPPlus.otz</string>
 			<key>UTTypeDescription</key>
-			<string>OpenLP Theme</string>
+			<string>OpenLP+ Theme</string>
 			<key>UTTypeConformsTo</key>
 			<array>
 				<string>public.data</string>
@@ -113,7 +113,7 @@
 		</dict>
 	</array>
 	<key>CFBundleIdentifier</key>
-	<string>org.openlp.OpenLP</string>
+	<string>net.tbcproductions.OpenLPPlus</string>
 	<key>CFBundleShortVersionString</key>
 	<string>%(openlp_version)s</string>
 	<key>CFBundleVersion</key>
@@ -135,15 +135,15 @@
 	<key>NSAppleScriptEnabled</key>
 	<false/>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>OpenLP needs to control System Events to be able control Keynote and PowerPoint</string>
+	<string>OpenLP+ needs to control System Events to be able to control Keynote and PowerPoint</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>CFBundleHelpBookFolder</key>
-	<string>OpenLP.help</string>
+	<string>OpenLPPlus.help</string>
 	<key>CFBundleHelpBookName</key>
-	<string>org.openlp.OpenLP.help</string>
+	<string>net.tbcproductions.OpenLPPlus.help</string>
 	<key>NSRequiresAquaSystemAppearance</key>
 	<false/>
 </dict>

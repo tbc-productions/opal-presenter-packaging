@@ -13,8 +13,8 @@ python flatpak-pip-generator  --requirements-file  requirements.txt
 
 # Finally do the build, install for the user and into a repo in the repo-folder
 mkdir repo
-flatpak-builder --install-deps-from=flathub --user --install --force-clean --repo=repo openlpplus-flatpak-builddir org.tbcproductions.OpenLPPlus.yml
+flatpak-builder --install-deps-from=flathub --user --install --force-clean --repo=repo openlpplus-flatpak-builddir net.tbcproductions.OpenLPPlus.yml
 
 # create flatpak bundle file
 echo "Bundle into a flatpak file, this can take a while..."
-flatpak build-bundle repo OpenLPPlus-${BUNDLE_VERSION}.flatpak org.tbcproductions.OpenLPPlus
+flatpak build-bundle repo OpenLPPlus-${BUNDLE_VERSION}.flatpak net.tbcproductions.OpenLPPlus
