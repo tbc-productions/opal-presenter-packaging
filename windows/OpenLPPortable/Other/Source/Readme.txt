@@ -15,11 +15,12 @@ USER CONFIGURATION
 ==================
 
 Some configuration in the PortableApps.com Launcher can be overridden by the
-user in an INI file next to OpenLPPortable.exe called OpenLPPortablePortable.ini.
-If you are happy with the default options, it is not necessary, though.  There
-is an example INI included with this package to get you started.  To use it,
-copy AppNamePortable.ini from this directory to OpenLPPortable.ini next to
-OpenLPPortable.exe. The options in the INI file are as follows:
+user in an INI file next to OpenLPPlusPortable.exe called
+OpenLPPlusPortablePortable.ini. If you are happy with the default options, it
+is not necessary, though. There is an example INI included with this package to
+get you started. To use it, copy OpenLPPlusPortable.example.ini from this
+directory to OpenLPPlusPortablePortable.ini next to OpenLPPlusPortable.exe.
+The options in the INI file are as follows:
 
    AdditionalParameters=
    DisableSplashScreen=false

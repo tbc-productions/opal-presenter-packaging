@@ -102,6 +102,10 @@ class WindowsBuilder(Builder):
     The :class:`WindowsBuilder` class encapsulates everything that is needed
     to build a Windows installer.
     """
+    # Must match ``-n`` in :meth:`Builder.run_pyinstaller` (OpenLP+ packaging).
+    windows_dist_name = 'OpenLP+'
+    windows_main_exe = 'OpenLP+.exe'
+
     # Make mypy happy
     program_files: str
     candle_exe: str
@@ -182,14 +186,14 @@ class WindowsBuilder(Builder):
                 else:
                     file_ = E.File(Id=source_id, Name=fname, Source=source)
                     component = E.Component(file_, Id=source_id, Guid='*', DiskId='1')
-                if source.endswith('OpenLP.exe'):
+                if os.path.basename(source) == self.windows_main_exe:
                     self._openlp_id = source_id
                     file_.set('KeyPath', 'yes')
                     fw_program = '[#{}]'.format(source_id)
-                    component.append(FxE.FirewallException(Id='OpenLP_TCP', Name='$(var.ProductName)',
+                    component.append(FxE.FirewallException(Id='OpenLPPlus_TCP', Name='$(var.ProductName)',
                                                            IgnoreFailure='yes', Program=fw_program,
                                                            Protocol='tcp', Scope='any'))
-                    component.append(FxE.FirewallException(Id='OpenLP_UDP', Name='$(var.ProductName)',
+                    component.append(FxE.FirewallException(Id='OpenLPPlus_UDP', Name='$(var.ProductName)',
                                                            IgnoreFailure='yes', Program=fw_program,
                                                            Protocol='udp', Scope='any'))
                     component.append(E.Shortcut(Id='ApplicationStartMenuShortcut', Name='$(var.ProductName)',
@@ -210,8 +214,8 @@ class WindowsBuilder(Builder):
                             E.MIME(Advertise="yes", ContentType="application/-x-openlp-service-lite", Default="yes"),
                             Id="oszl"
                         ),
-                        Id="OpenLP.Service",
-                        Description="OpenLP Service File",
+                        Id="OpenLPPlus.Service",
+                        Description="OpenLP+ service file",
                         Icon="service_file.ico",
                         Advertise="yes"
                     ))
@@ -248,7 +252,12 @@ class WindowsBuilder(Builder):
                                  namespaces={'wix': 'http://schemas.microsoft.com/wix/2006/wi'})[0]
         self._print_verbose('Creating XML fragments from files and directories')
         component_ids = self._get_dirs_and_files(install_dir, self.dist_path)
-        # Write the property for the "Run OpenLP" checkbox
+        if self._openlp_id is None:
+            raise Exception(
+                'Could not find main executable {exe} under {path}. Check that PyInstaller '
+                'output folder matches windows_dist_name ({folder!r}).'.format(
+                    exe=self.windows_main_exe, path=self.dist_path, folder=self.windows_dist_name))
+        # Write the property for the "Run after install" checkbox
         product = root.xpath('//wix:Product',
                              namespaces={'wix': 'http://schemas.microsoft.com/wix/2006/wi'})[0]
         product.append(E.Property(Id='WixShellExecTarget', Value='[#{}]'.format(self._openlp_id)))
@@ -277,7 +286,7 @@ class WindowsBuilder(Builder):
             version = '{}-x64'.format(self.version)
         else:
             version = self.version
-        msi_file = os.path.abspath(os.path.join(self.dist_path, '..', 'OpenLP-{}.msi'.format(version)))
+        msi_file = os.path.abspath(os.path.join(self.dist_path, '..', 'OpenLP+-{}.msi'.format(version)))
         if os.path.exists(msi_file):
             self._print_verbose('Removing old MSI file')
             os.unlink(msi_file)
@@ -357,7 +366,7 @@ class WindowsBuilder(Builder):
         self._create_portableapps_appinfo_file()
         # Copy distribution files to portableapp build directory.
         self._print_verbose('... Copying distribution files')
-        portable_app_path = os.path.join(self.portable_dest_path, 'App', 'OpenLP')
+        portable_app_path = os.path.join(self.portable_dest_path, 'App', self.windows_dist_name)
         dir_util.copy_tree(self.dist_path, portable_app_path)
         # Build the launcher.
         self._print_verbose('... Building PortableApps Launcher')
@@ -367,7 +376,8 @@ class WindowsBuilder(Builder):
         self._print_verbose('... Building PortableApps Installer')
         self._run_command([self.portableinstaller_exe, self.portable_dest_path],
                           'Error running PortableApps Installer')
-        portable_exe_name = 'OpenLPPortable_{ver}-{arch}.paf.exe'.format(ver=self.portable_version, arch=self.arch)
+        portable_exe_name = 'OpenLPPlusPortable_{ver}-{arch}.paf.exe'.format(
+            ver=self.portable_version, arch=self.arch)
         portable_exe_path = os.path.abspath(os.path.join(self.portable_dest_path, '..', portable_exe_name))
         self._print_verbose('... Portable Build: {}'.format(portable_exe_path))
         if os.path.exists(portable_exe_path):
@@ -428,7 +438,7 @@ class WindowsBuilder(Builder):
         Set up a variety of paths that we use throughout the build process.
         """
         super().setup_paths()
-        self.dist_path = os.path.join(self.work_path, 'dist', 'OpenLP')
+        self.dist_path = os.path.join(self.work_path, 'dist', self.windows_dist_name)
         self.winres_path = os.path.join(self.branch_path, 'resources', 'windows')
         self._check_wow64_workspace()
 

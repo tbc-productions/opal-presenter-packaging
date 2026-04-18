@@ -3,9 +3,9 @@ Type=PortableApps.comFormat
 Version=3.0
 
 [Details]
-Name=OpenLP Portable
-AppID=OpenLPPortable
-Publisher=OpenLP.org
+Name=OpenLP+ Portable
+AppID=OpenLPPlusPortable
+Publisher=openlp.org
 Homepage=openlp.org
 Category=Utilities
 Description=Lyrics Projection
@@ -23,7 +23,7 @@ PackageVersion=%(package_version)s
 
 [Control]
 Icons=1
-Start=OpenLPPortable.exe
+Start=OpenLPPlusPortable.exe
 
 [Associations]
 FileType=osz
