@@ -118,7 +118,6 @@ jobs:
 
       - name: Build Flatpak
         run: |
-          mkdir -p dist
           python3 builders/flatpak-builder.py \
             --branch "$(pwd)/source" \
             "${{ needs.prepare-source.outputs.version }}"
@@ -132,7 +131,7 @@ jobs:
           set -e
           shopt -s nullglob
           found=0
-          for asset in dist/*.flatpak; do
+          for asset in flatpak/*.flatpak; do
             found=1
             echo "Uploading $asset"
             curl -fsSL -X POST \
@@ -142,7 +141,7 @@ jobs:
               "${GITHUB_SERVER_URL}/api/v1/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?name=$(basename "$asset")"
           done
           if [ "$found" = "0" ]; then
-            echo "::warning::No Flatpak assets found in dist/"
+            echo "::warning::No Flatpak assets found in flatpak/"
           fi
 
   build-macos:
@@ -197,7 +196,7 @@ jobs:
           set -e
           shopt -s nullglob
           found=0
-          for asset in dist/*.dmg; do
+          for asset in source/dist/*.dmg; do
             found=1
             echo "Uploading $asset"
             curl -fsSL -X POST \
@@ -207,7 +206,7 @@ jobs:
               "${GITHUB_SERVER_URL}/api/v1/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?name=$(basename "$asset")"
           done
           if [ "$found" = "0" ]; then
-            echo "::warning::No macOS assets found in dist/"
+            echo "::warning::No macOS assets found in source/dist/"
           fi
 
   build-windows:
@@ -264,7 +263,7 @@ jobs:
           set -e
           shopt -s nullglob
           found=0
-          for asset in dist/*.msi dist/*.exe; do
+          for asset in source/dist/*.msi source/dist/*.exe; do
             found=1
             echo "Uploading $asset"
             curl -fsSL -X POST \
@@ -274,7 +273,7 @@ jobs:
               "${GITHUB_SERVER_URL}/api/v1/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?name=$(basename "$asset")"
           done
           if [ "$found" = "0" ]; then
-            echo "::warning::No Windows assets found in dist/"
+            echo "::warning::No Windows assets found in source/dist/"
           fi
 
   publish-release:
