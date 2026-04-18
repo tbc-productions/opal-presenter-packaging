@@ -422,6 +422,36 @@ class WindowsBuilder(Builder):
         super().setup_paths()
         self.dist_path = os.path.join(self.work_path, 'dist', 'OpenLP')
         self.winres_path = os.path.join(self.branch_path, 'resources', 'windows')
+        self._check_wow64_workspace()
+
+    def _check_wow64_workspace(self):
+        """
+        Refuse to continue if the workspace lives under ``C:\\Windows\\System32``.
+
+        WiX v3's tools (candle.exe, light.exe) and the PortableApps launcher are
+        32-bit. When they open a file under ``C:\\Windows\\System32`` the WOW64
+        File System Redirector silently rewrites the path to ``SysWOW64``, where
+        the file does not exist - producing a bewildering ``CNDL0103`` (or
+        similar) error. This happens whenever act_runner is installed as a
+        LocalSystem service with no explicit HOME override, because LocalSystem's
+        profile lives at ``C:\\Windows\\System32\\config\\systemprofile``.
+        """
+        if os.name != 'nt':
+            return
+        system32 = os.path.join(os.environ.get('SystemRoot', r'C:\Windows'), 'System32')
+        try:
+            common = os.path.commonpath([os.path.abspath(self.work_path), system32])
+        except ValueError:
+            return
+        if os.path.normcase(common) == os.path.normcase(system32):
+            raise Exception(
+                'The build workspace is under {}, which is subject to WOW64 File '
+                'System Redirection for 32-bit tools (candle.exe, light.exe, '
+                'PortableApps Launcher). Move the runner workspace off '
+                r'C:\Windows\System32 - for example, set HOME and USERPROFILE '
+                'environment variables for the act_runner service to a path '
+                r'like C:\act-runner-home, or run the runner under a regular '
+                'user account. See docs/windows-runner-setup.md.'.format(system32))
 
     def setup_extra(self):
         """

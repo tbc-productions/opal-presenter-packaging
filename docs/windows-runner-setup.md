@@ -226,11 +226,41 @@ nssm set gitea-actions-runner AppRotateFiles 1
 nssm set gitea-actions-runner AppRotateBytes 10485760
 ```
 
-### 7c. (Recommended) run as your user account
+### 7c. (Required) move the runner workspace off `C:\Windows\System32`
 
-NSSM defaults to `LocalSystem`, which doesn't see user-installed Python,
-Chocolatey packages on the user PATH, or your developer tools. Switch to your
-account:
+By default NSSM runs the service as `LocalSystem`, whose profile directory
+is `C:\Windows\System32\config\systemprofile`. act_runner then places every
+job's workspace under `%HOME%\.cache\act\<hash>\hostexecutor`, i.e.
+`C:\Windows\System32\config\systemprofile\.cache\act\...`.
+
+This is catastrophic for the Windows build because several tools in the
+pipeline are **32-bit** — most notably WiX v3's `candle.exe` / `light.exe`
+and the PortableApps launcher. When a 32-bit process on 64-bit Windows
+reads any `C:\Windows\System32\...` path, the WOW64 File System Redirector
+silently rewrites it to `C:\Windows\SysWOW64\...`, which doesn't contain
+the workspace, so those tools fail with bewildering errors such as
+`candle.exe : error CNDL0103 : The system cannot find the file
+'...\OpenLP.wxs' with type 'Source'.` — even though 64-bit Python
+wrote the file to the exact path on the command line.
+
+Two ways to fix it — do one of these:
+
+**Option A (minimal change):** keep the LocalSystem service user, but
+override `HOME`/`USERPROFILE` for the service so act_runner puts its
+workspace somewhere WOW64-safe:
+
+```powershell
+New-Item -ItemType Directory -Force -Path C:\act-runner-home | Out-Null
+
+nssm set gitea-actions-runner AppEnvironmentExtra `
+  HOME=C:\act-runner-home `
+  USERPROFILE=C:\act-runner-home
+```
+
+**Option B (recommended):** switch the service to a regular user account.
+NSSM defaults to `LocalSystem`, which also hides user-installed Python,
+Chocolatey packages on the user PATH, and other developer tools. Running
+as a normal user sidesteps both problems:
 
 ```powershell
 nssm set gitea-actions-runner ObjectName ".\YourWindowsUsername" "YourPassword"
@@ -238,6 +268,10 @@ nssm set gitea-actions-runner ObjectName ".\YourWindowsUsername" "YourPassword"
 
 - `.\User` — local account
 - `DOMAIN\User` — domain account
+
+In either case, restart the service (step 7d) after making the change. The
+Windows builder will refuse to start if the workspace is still under
+`C:\Windows\System32` and print a message pointing back here.
 
 ### 7d. Start it
 
@@ -330,6 +364,15 @@ wrappers act_runner writes to `C:\...\act\workflow\<n>.ps1`. Apply the
 ExecutionPolicy change in **step 1b** (`Set-ExecutionPolicy -Scope
 LocalMachine -ExecutionPolicy RemoteSigned -Force`) and restart the
 service.
+
+### `candle.exe : error CNDL0103` / `light.exe` can't find files
+The workspace is under `C:\Windows\System32\config\systemprofile\.cache`
+because act_runner is running as `LocalSystem` with no `HOME` override.
+WiX v3's candle/light are 32-bit and get redirected to `SysWOW64` by
+WOW64 File System Redirection. Apply **step 7c** (override `HOME` /
+`USERPROFILE`, or switch the service user) and restart the service.
+The `build-windows` job will self-detect this on the next run and bail
+out early with a pointer back here.
 
 ### Signing / permissions prompts during the build
 The first interactive run may prompt; once approved the service runs
