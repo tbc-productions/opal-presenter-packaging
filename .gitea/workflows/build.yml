@@ -29,6 +29,10 @@ on:
         description: "Build the Linux Flatpak (requires a runner labelled flatpak-builder)"
         required: false
         default: "false"
+      include_plugins:
+        description: "Bundle openlp-plugins into the build (auto-enabled when an openlp-plugins tag triggered this run)"
+        required: false
+        default: "false"
 
 env:
   PLUS_REPO: tbcproductions/openlp-plus
@@ -44,6 +48,7 @@ jobs:
       plus_tag: ${{ steps.resolve.outputs.plus_tag }}
       plugins_tag: ${{ steps.resolve.outputs.plugins_tag }}
       version: ${{ steps.resolve.outputs.version }}
+      include_plugins: ${{ steps.resolve.outputs.include_plugins }}
     steps:
       - name: Install tooling
         run: apk add --no-cache curl jq tar gzip git
@@ -52,6 +57,8 @@ jobs:
         id: resolve
         env:
           CI_TOKEN: ${{ secrets.CI_TOKEN }}
+          INPUT_INCLUDE_PLUGINS: ${{ github.event.inputs.include_plugins }}
+          CLIENT_INCLUDE_PLUGINS: ${{ github.event.client_payload.include_plugins }}
         run: |
           PLUS_TAG="${{ github.event.client_payload.tag || github.event.inputs.openlp_tag || '' }}"
           PLUGINS_TAG="${{ github.event.inputs.plugins_tag || '' }}"
@@ -65,18 +72,37 @@ jobs:
             PLUS_TAG=""
           fi
 
+          # Decide whether plugins should be bundled.
+          # Priority: openlp-plugins-triggered run > client_payload flag >
+          # workflow_dispatch input > default false.
+          INCLUDE_PLUGINS="false"
+          if [ "$INPUT_INCLUDE_PLUGINS" = "true" ]; then
+            INCLUDE_PLUGINS="true"
+          fi
+          if [ "$CLIENT_INCLUDE_PLUGINS" = "true" ]; then
+            INCLUDE_PLUGINS="true"
+          fi
+          if [ "$SOURCE" = "openlp-plugins" ]; then
+            INCLUDE_PLUGINS="true"
+          fi
+          echo "Plugins inclusion: $INCLUDE_PLUGINS"
+
           if [ -z "$PLUS_TAG" ]; then
             PLUS_TAG="$(curl -fsSL -H "Authorization: token ${CI_TOKEN}" \
               "${GITHUB_SERVER_URL}/api/v1/repos/${PLUS_REPO}/releases/latest" | jq -r .tag_name)"
           fi
-          if [ -z "$PLUGINS_TAG" ]; then
+          if [ "$INCLUDE_PLUGINS" = "true" ] && [ -z "$PLUGINS_TAG" ]; then
             PLUGINS_TAG="$(curl -fsSL -H "Authorization: token ${CI_TOKEN}" \
               "${GITHUB_SERVER_URL}/api/v1/repos/${PLUGINS_REPO}/releases/latest" | jq -r .tag_name)"
           fi
+          if [ "$INCLUDE_PLUGINS" != "true" ]; then
+            PLUGINS_TAG=""
+          fi
 
-          echo "plus_tag=$PLUS_TAG"       | tee -a "$GITHUB_OUTPUT"
-          echo "plugins_tag=$PLUGINS_TAG" | tee -a "$GITHUB_OUTPUT"
-          echo "version=${PLUS_TAG#v}"    | tee -a "$GITHUB_OUTPUT"
+          echo "plus_tag=$PLUS_TAG"               | tee -a "$GITHUB_OUTPUT"
+          echo "plugins_tag=$PLUGINS_TAG"         | tee -a "$GITHUB_OUTPUT"
+          echo "version=${PLUS_TAG#v}"            | tee -a "$GITHUB_OUTPUT"
+          echo "include_plugins=$INCLUDE_PLUGINS" | tee -a "$GITHUB_OUTPUT"
 
       - name: Check out openlp-plus at tag
         uses: actions/checkout@v4
@@ -88,6 +114,7 @@ jobs:
           token: ${{ secrets.CI_TOKEN }}
 
       - name: Check out openlp-plugins at tag
+        if: ${{ steps.resolve.outputs.include_plugins == 'true' }}
         uses: actions/checkout@v4
         with:
           repository: ${{ env.PLUGINS_REPO }}
@@ -97,6 +124,7 @@ jobs:
           token: ${{ secrets.CI_TOKEN }}
 
       - name: Merge plugins into openlp tree
+        if: ${{ steps.resolve.outputs.include_plugins == 'true' }}
         run: |
           set -e
           SRC=source/openlp-plus
@@ -120,7 +148,9 @@ jobs:
             cp -r "$plugin_src" "$DEST/$plugin_name"
           done
 
-          echo -n "${{ steps.resolve.outputs.version }}" > "$SRC/openlp/.version"
+      - name: Stamp version file
+        run: |
+          echo -n "${{ steps.resolve.outputs.version }}" > source/openlp-plus/openlp/.version
 
       - name: Archive merged source
         run: |
@@ -291,14 +321,23 @@ jobs:
       - name: Create release and upload assets
         env:
           CI_TOKEN: ${{ secrets.CI_TOKEN }}
+          PLUS_TAG: ${{ needs.prepare-source.outputs.plus_tag }}
+          PLUGINS_TAG: ${{ needs.prepare-source.outputs.plugins_tag }}
+          INCLUDE_PLUGINS: ${{ needs.prepare-source.outputs.include_plugins }}
         run: |
           set -e
-          TAG="build-${{ needs.prepare-source.outputs.plus_tag }}-$(date -u +%Y%m%d%H%M%S)"
-          NAME="OpenLP+ ${{ needs.prepare-source.outputs.plus_tag }} (plugins ${{ needs.prepare-source.outputs.plugins_tag }})"
+          TAG="build-${PLUS_TAG}-$(date -u +%Y%m%d%H%M%S)"
+          if [ "$INCLUDE_PLUGINS" = "true" ]; then
+            NAME="OpenLP+ ${PLUS_TAG} (plugins ${PLUGINS_TAG})"
+            BODY_TEXT="Built from openlp-plus @ ${PLUS_TAG} with openlp-plugins @ ${PLUGINS_TAG} bundled."
+          else
+            NAME="OpenLP+ ${PLUS_TAG}"
+            BODY_TEXT="Built from openlp-plus @ ${PLUS_TAG} (no third-party plugins bundled)."
+          fi
           BODY=$(jq -n \
             --arg tag "$TAG" \
             --arg name "$NAME" \
-            --arg body "Built from openlp-plus @ ${{ needs.prepare-source.outputs.plus_tag }} and openlp-plugins @ ${{ needs.prepare-source.outputs.plugins_tag }}." \
+            --arg body "$BODY_TEXT" \
             '{tag_name:$tag, name:$name, body:$body, draft:false, prerelease:false, target_commitish:"main"}')
 
           RELEASE_ID=$(curl -fsSL -X POST \
