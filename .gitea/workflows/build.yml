@@ -17,8 +17,16 @@ on:
         description: "Create an openlp-packaging release with the artifacts"
         required: false
         default: "true"
+      build_macos:
+        description: "Build the macOS .dmg (requires a runner labelled macos)"
+        required: false
+        default: "true"
+      build_windows:
+        description: "Build the Windows .msi / portable (requires a runner labelled windows)"
+        required: false
+        default: "true"
       build_flatpak:
-        description: "Also build the Flatpak (requires a runner labelled flatpak-builder)"
+        description: "Build the Linux Flatpak (requires a runner labelled flatpak-builder)"
         required: false
         default: "false"
 
@@ -165,6 +173,7 @@ jobs:
   build-macos:
     name: Build macOS (.dmg)
     needs: prepare-source
+    if: ${{ github.event.inputs.build_macos != 'false' && github.event.client_payload.build_macos != false }}
     runs-on: macos
     steps:
       - name: Check out packaging repo
@@ -214,6 +223,7 @@ jobs:
   build-windows:
     name: Build Windows (.msi / portable)
     needs: prepare-source
+    if: ${{ github.event.inputs.build_windows != 'false' && github.event.client_payload.build_windows != false }}
     runs-on: windows
     steps:
       - name: Check out packaging repo

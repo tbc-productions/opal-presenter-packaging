@@ -251,6 +251,11 @@ INFO Runner: mymac-macos, ..., is online and listening
    the Linux runner finishes `prepare-source`.
 3. Tail `~/actions-runner/runner.log` to see the job executing locally.
 
+> **Skipping the macOS build.** The `Build OpenLP+` workflow exposes a
+> `build_macos` input (default `true`). Set it to `false` on a manual
+> run to skip this job — useful if the Mac is offline for maintenance
+> and you still want a Windows-only build to go through.
+
 ---
 
 ## Troubleshooting

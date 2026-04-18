@@ -215,6 +215,11 @@ and the service status should be `Running`.
    as the Linux runner finishes `prepare-source`.
 3. Tail `C:\actions-runner\runner.log` to see the job executing locally.
 
+> **Skipping the Windows build.** The `Build OpenLP+` workflow exposes a
+> `build_windows` input (default `true`). Set it to `false` on a manual
+> run to skip this job — useful if the Windows box is offline for
+> maintenance and you still want a macOS-only build to go through.
+
 ---
 
 ## Troubleshooting
