@@ -17,4 +17,4 @@ flatpak-builder --install-deps-from=flathub --user --install --force-clean --rep
 
 # create flatpak bundle file
 echo "Bundle into a flatpak file, this can take a while..."
-flatpak build-bundle repo OpenLP+-${BUNDLE_VERSION}.flatpak org.tbcproductions.OpenLPPlus
+flatpak build-bundle repo OpenLPPlus-${BUNDLE_VERSION}.flatpak org.tbcproductions.OpenLPPlus

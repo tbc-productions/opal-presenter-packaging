@@ -203,7 +203,7 @@ def build_flatpak(version: str, bundle: str):
                   'org.tbcproductions.OpenLPPlus.yml'], cwd=str(base_path / 'flatpak'))
     if result.returncode != 0:
         return False
-    result = run(['flatpak', 'build-bundle', 'repo', f'OpenLP+-{version}-{bundle}.flatpak',
+    result = run(['flatpak', 'build-bundle', 'repo', f'OpenLPPlus-{version}-{bundle}.flatpak',
                   'org.tbcproductions.OpenLPPlus'],
                  cwd=str(base_path / 'flatpak'))
     if result.returncode != 0:

@@ -22,7 +22,7 @@
 """
 This is the settings file for building the DMG. Run dmgbuild like so::
 
-    $ dmgbuild -s dmg-settings.py -D size=<size>,app=<path/to/OpenLP+.app> "OpenLP+" OpenLP+-{version}-{arch}.dmg
+    $ dmgbuild -s dmg-settings.py -D size=<size>,app=<path/to/OpenLP+.app> "OpenLP+" OpenLPPlus-{version}-{arch}.dmg
 """
 import os
 

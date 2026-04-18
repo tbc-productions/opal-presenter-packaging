@@ -391,7 +391,7 @@ class MacOSBuilder(Builder):
         self._print('Creating dmg file...')
         arch = platform.machine()
         ver_slug = self.filename_version_slug()
-        dmg_name = f'OpenLP+-{ver_slug}-{arch}.dmg'
+        dmg_name = f'OpenLPPlus-{ver_slug}-{arch}.dmg'
         dmg_title = f'OpenLP+ {ver_slug}'
 
         self.dmg_file = os.path.join(self.work_path, 'dist', dmg_name)

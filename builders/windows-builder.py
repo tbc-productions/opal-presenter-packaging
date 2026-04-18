@@ -286,7 +286,7 @@ class WindowsBuilder(Builder):
             version = '{}-x64'.format(self.version)
         else:
             version = self.version
-        msi_file = os.path.abspath(os.path.join(self.dist_path, '..', 'OpenLP+-{}.msi'.format(version)))
+        msi_file = os.path.abspath(os.path.join(self.dist_path, '..', 'OpenLPPlus-{}.msi'.format(version)))
         if os.path.exists(msi_file):
             self._print_verbose('Removing old MSI file')
             os.unlink(msi_file)
@@ -384,7 +384,7 @@ class WindowsBuilder(Builder):
         if len(matches) > 1:
             self._print_verbose('Multiple .paf.exe found, using {}'.format(built_paf))
         slug = self.filename_version_slug()
-        final_portable = 'OpenLP+-{}-{}-portable.exe'.format(slug, self.arch)
+        final_portable = 'OpenLPPlus-{}-{}-portable.exe'.format(slug, self.arch)
         dest = os.path.join(self.dist_path, '..', final_portable)
         self._print_verbose('... Portable build: {} -> {}'.format(built_paf, dest))
         move(built_paf, dest)
