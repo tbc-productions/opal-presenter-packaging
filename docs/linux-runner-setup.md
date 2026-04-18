@@ -3,8 +3,8 @@
 Step-by-step for registering a self-hosted Gitea Actions runner on Linux so
 the `prepare-source`, `build-flatpak`, and `publish-release` jobs in
 `openlp-packaging/.gitea/workflows/build.yml` — plus the `test` and
-`release` workflows in `openlp-plus` and `openlp-plugins` — can pick up
-work.
+`release` workflows in `openlp-plus` and the lightweight `release`
+workflow in `openlp-plugins` — can pick up work.
 
 All three workflows target `runs-on: ubuntu-latest` and declare their own
 container images (`alpine:3.20`, `python:3.12-bookworm`,
@@ -153,8 +153,8 @@ Adjust the architecture label:
 
 This creates a `.runner` file in `~/actions-runner/`. The label
 `ubuntu-latest` **must** be present — the `prepare-source` /
-`publish-release` jobs and the `openlp-plus` / `openlp-plugins` test
-jobs all use `runs-on: ubuntu-latest`.
+`publish-release` jobs, the `openlp-plus` test job, and the
+`openlp-plugins` release job all use `runs-on: ubuntu-latest`.
 
 ### Optional: the `flatpak-builder` label
 
