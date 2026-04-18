@@ -5,7 +5,7 @@ PROJECTS_DIR=/home/openlp/Projects
 SOURCE_DIR=$PROJECTS_DIR/OpenLP/trunk
 RELEASE_DIR=release-$VERSION
 UPLOADS_DIR=/home/openlp/Projects/OpenLP/Uploads
-FILENAME=OpenLP+-$VERSION.tar.gz
+FILENAME=OpenLPPlus-$VERSION.tar.gz
 #TSDIR=$RELEASE/resources/i18n
 #QMDIR=$RELEASE/openlp/i18n
 

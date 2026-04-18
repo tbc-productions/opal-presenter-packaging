@@ -3,7 +3,7 @@
 # Nightly Build Script for OpenLP+                                            #
 ###############################################################################
 
-REGEX='OpenLP\+-([0-9]\.[0-9]\.[0-9])-bzr([0-9]+)[.|-]'
+REGEX='OpenLPPlus-([0-9]\.[0-9]\.[0-9])-bzr([0-9]+)[.|-]'
 PROJECT_DIR=/home/openlp/Projects/OpenLP
 SOURCE_DIR=$PROJECT_DIR/trunk
 VERSION_FILE=$SOURCE_DIR/openlp/.version
@@ -20,7 +20,7 @@ echo "Updating code...done."
 # We can't get the version number until after updating the code
 # otherwise the version number we get is out-of-date
 OPENLP_VERSION=`~/bin/openlp_version.py $SOURCE_DIR`
-UPLOAD_TARBALL=OpenLP+-${OPENLP_VERSION}.tar.gz
+UPLOAD_TARBALL=OpenLPPlus-${OPENLP_VERSION}.tar.gz
 PACKAGE_TARBALL=$PACKAGING_DIR/Tarballs/openlp_${OPENLP_VERSION}.orig.tar.gz
 
 echo -n "Checking revision..."
@@ -36,14 +36,14 @@ echo -n "Writing version number..."
 bzr revno > $VERSION_FILE
 echo done.
 echo -n "Exporting source for $OPENLP_VERSION ..."
-if [[ -d "../OpenLP+-$OPENLP_VERSION" ]]; then
-	rm -r ../OpenLP+-$OPENLP_VERSION
+if [[ -d "../OpenLPPlus-$OPENLP_VERSION" ]]; then
+	rm -r ../OpenLPPlus-$OPENLP_VERSION
 fi
-bzr export ../OpenLP+-$OPENLP_VERSION
+bzr export ../OpenLPPlus-$OPENLP_VERSION
 echo done.
 echo -n "Creating source tarball $UPLOADS_DIR/$UPLOAD_TARBALL ..."
 cd $PROJECT_DIR
-tar -czf $UPLOADS_DIR/$UPLOAD_TARBALL OpenLP+-$OPENLP_VERSION
+tar -czf $UPLOADS_DIR/$UPLOAD_TARBALL OpenLPPlus-$OPENLP_VERSION
 echo done.
 echo -n "Uploading tarball to download location..."
 cd $UPLOADS_DIR

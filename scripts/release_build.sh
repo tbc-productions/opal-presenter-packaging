@@ -2,7 +2,7 @@
 
 VERSION=$1
 RELEASE=release-$VERSION
-FILENAME=OpenLP+-$VERSION.tar.gz
+FILENAME=OpenLPPlus-$VERSION.tar.gz
 #TSDIR=$RELEASE/resources/i18n
 #QMDIR=$RELEASE/openlp/i18n
 
