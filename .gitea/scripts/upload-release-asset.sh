@@ -36,13 +36,23 @@ if [ -n "${ORIGIN_IP:-}" ]; then
   echo "Bypassing proxy via ${host}:${url_port} -> ${origin_ip}:${origin_port} (TLS verification disabled)"
 fi
 
+PYBIN="$(command -v python3 2>/dev/null || command -v python 2>/dev/null || true)"
+if [ -z "$PYBIN" ]; then
+  echo "::error::python not found on PATH; install python3 or python" >&2
+  exit 1
+fi
+
 base="${GITHUB_SERVER_URL}/api/v1/repos/${RELEASE_REPO}/releases/${RELEASE_ID}/assets"
 
 existing_id=$(curl -fsSL "${bypass_args[@]}" \
   -H "Authorization: token ${CI_TOKEN}" \
   "$base" \
-  | jq -r --arg name "$asset_name" '.[] | select(.name == $name) | .id' \
-  | head -n 1)
+  | "$PYBIN" -c 'import json,sys
+name = sys.argv[1]
+for asset in json.load(sys.stdin):
+    if asset.get("name") == name:
+        print(asset["id"])
+        break' "$asset_name")
 
 if [ -n "$existing_id" ]; then
   echo "Deleting existing asset $asset_name (id=$existing_id)"
