@@ -1,0 +1,305 @@
+name: Build OpenLP+
+
+on:
+  repository_dispatch:
+    types: [upstream-release]
+  workflow_dispatch:
+    inputs:
+      openlp_tag:
+        description: "openlp-plus tag to build (blank = latest release)"
+        required: false
+        default: ""
+      plugins_tag:
+        description: "openlp-plugins tag to build (blank = latest release)"
+        required: false
+        default: ""
+      create_release:
+        description: "Create an openlp-packaging release with the artifacts"
+        required: false
+        default: "true"
+
+env:
+  PLUS_REPO: tbcproductions/openlp-plus
+  PLUGINS_REPO: tbcproductions/openlp-plugins
+
+jobs:
+  prepare-source:
+    name: Prepare merged source tree
+    runs-on: synology-runner
+    container:
+      image: alpine:3.20
+    outputs:
+      plus_tag: ${{ steps.resolve.outputs.plus_tag }}
+      plugins_tag: ${{ steps.resolve.outputs.plugins_tag }}
+      version: ${{ steps.resolve.outputs.version }}
+    steps:
+      - name: Install tooling
+        run: apk add --no-cache curl jq tar gzip git
+
+      - name: Resolve tags
+        id: resolve
+        env:
+          CI_TOKEN: ${{ secrets.CI_TOKEN }}
+        run: |
+          PLUS_TAG="${{ github.event.client_payload.tag || github.event.inputs.openlp_tag || '' }}"
+          PLUGINS_TAG="${{ github.event.inputs.plugins_tag || '' }}"
+          SOURCE="${{ github.event.client_payload.source || '' }}"
+
+          if [ "$SOURCE" = "openlp-plus" ]; then
+            PLUS_TAG="${{ github.event.client_payload.tag }}"
+            PLUGINS_TAG=""
+          elif [ "$SOURCE" = "openlp-plugins" ]; then
+            PLUGINS_TAG="${{ github.event.client_payload.tag }}"
+            PLUS_TAG=""
+          fi
+
+          if [ -z "$PLUS_TAG" ]; then
+            PLUS_TAG="$(curl -fsSL -H "Authorization: token ${CI_TOKEN}" \
+              "${GITHUB_SERVER_URL}/api/v1/repos/${PLUS_REPO}/releases/latest" | jq -r .tag_name)"
+          fi
+          if [ -z "$PLUGINS_TAG" ]; then
+            PLUGINS_TAG="$(curl -fsSL -H "Authorization: token ${CI_TOKEN}" \
+              "${GITHUB_SERVER_URL}/api/v1/repos/${PLUGINS_REPO}/releases/latest" | jq -r .tag_name)"
+          fi
+
+          echo "plus_tag=$PLUS_TAG"       | tee -a "$GITHUB_OUTPUT"
+          echo "plugins_tag=$PLUGINS_TAG" | tee -a "$GITHUB_OUTPUT"
+          echo "version=${PLUS_TAG#v}"    | tee -a "$GITHUB_OUTPUT"
+
+      - name: Check out openlp-plus at tag
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.PLUS_REPO }}
+          ref: ${{ steps.resolve.outputs.plus_tag }}
+          path: source/openlp-plus
+          fetch-depth: 0
+          token: ${{ secrets.CI_TOKEN }}
+
+      - name: Check out openlp-plugins at tag
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.PLUGINS_REPO }}
+          ref: ${{ steps.resolve.outputs.plugins_tag }}
+          path: source/openlp-plugins
+          fetch-depth: 0
+          token: ${{ secrets.CI_TOKEN }}
+
+      - name: Merge plugins into openlp tree
+        run: |
+          set -e
+          SRC=source/openlp-plus
+          PLUGINS=source/openlp-plugins
+          DEST="$SRC/openlp/plugins"
+          mkdir -p "$DEST"
+
+          echo "Plugins found:"
+          for plugin_dir in "$PLUGINS"/*/; do
+            plugin_name="$(basename "$plugin_dir")"
+            [ "$plugin_name" = "__pycache__" ] && continue
+
+            plugin_src="$plugin_dir/openlp/plugins/$plugin_name"
+            if [ ! -d "$plugin_src" ]; then
+              echo "  - $plugin_name: SKIP (no openlp/plugins/$plugin_name dir)"
+              continue
+            fi
+
+            echo "  - $plugin_name: copy -> $DEST/$plugin_name"
+            rm -rf "$DEST/$plugin_name"
+            cp -r "$plugin_src" "$DEST/$plugin_name"
+          done
+
+          echo -n "${{ steps.resolve.outputs.version }}" > "$SRC/openlp/.version"
+
+      - name: Archive merged source
+        run: |
+          tar -C source/openlp-plus -czf merged-source.tar.gz .
+
+      - name: Upload merged source artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: merged-source
+          path: merged-source.tar.gz
+          retention-days: 2
+
+  build-flatpak:
+    name: Build Flatpak (Linux)
+    needs: prepare-source
+    runs-on: synology-runner
+    container:
+      image: bilelmoussaoui/flatpak-github-actions:gnome-46
+      options: --privileged
+    steps:
+      - name: Check out packaging repo
+        uses: actions/checkout@v4
+
+      - name: Download merged source
+        uses: actions/download-artifact@v3
+        with:
+          name: merged-source
+
+      - name: Extract merged source
+        run: |
+          mkdir -p source
+          tar -xzf merged-source.tar.gz -C source
+
+      - name: Build Flatpak
+        run: |
+          mkdir -p dist
+          python3 builders/flatpak-builder.py \
+            --branch "$(pwd)/source" \
+            "${{ needs.prepare-source.outputs.version }}"
+
+      - name: Upload Flatpak artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: openlp-flatpak
+          path: dist/*.flatpak
+          retention-days: 14
+          if-no-files-found: warn
+
+  build-macos:
+    name: Build macOS (.dmg)
+    needs: prepare-source
+    runs-on: macos
+    steps:
+      - name: Check out packaging repo
+        uses: actions/checkout@v4
+
+      - name: Download merged source
+        uses: actions/download-artifact@v3
+        with:
+          name: merged-source
+
+      - name: Extract merged source
+        run: |
+          mkdir -p source
+          tar -xzf merged-source.tar.gz -C source
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install runtime deps
+        run: |
+          brew install icu4c enchant pkg-config || true
+          export PATH="$PATH:/opt/homebrew/opt/icu4c/bin:/opt/homebrew/opt/icu4c/sbin"
+          export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/opt/homebrew/opt/icu4c/lib/pkgconfig"
+          python -m pip install --upgrade pip
+          pip install pyinstaller dmgbuild macholib py-applescript Pyro5
+          pip install -e 'source/.[darkstyle,mysql,odbc,postgresql,spellcheck,sword-bibles]'
+
+      - name: Run macOS builder
+        env:
+          PYENCHANT_LIBRARY_PATH: /opt/homebrew/lib/libenchant-2.2.dylib
+        run: |
+          python builders/macos-builder.py \
+            --release "${{ needs.prepare-source.outputs.plus_tag }}" \
+            --skip-update \
+            --config macos/config-gitlab.ini \
+            --branch "$(pwd)/source"
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: openlp-macos
+          path: dist/*.dmg
+          retention-days: 14
+          if-no-files-found: warn
+
+  build-windows:
+    name: Build Windows (.msi / portable)
+    needs: prepare-source
+    runs-on: windows
+    steps:
+      - name: Check out packaging repo
+        uses: actions/checkout@v4
+
+      - name: Download merged source
+        uses: actions/download-artifact@v3
+        with:
+          name: merged-source
+
+      - name: Extract merged source
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path source | Out-Null
+          tar -xzf merged-source.tar.gz -C source
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install runtime deps
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller pyodbc pypiwin32
+          pip install https://github.com/cgohlke/pyicu-build/releases/download/v2.14/PyICU-2.14-cp312-cp312-win_amd64.whl
+          pip install -e 'source/.[darkstyle,mysql,odbc,postgresql,spellcheck,sword-bibles]'
+
+      - name: Run Windows builder
+        shell: pwsh
+        run: |
+          python builders/windows-builder.py `
+            --release "${{ needs.prepare-source.outputs.plus_tag }}" `
+            --skip-update `
+            --config windows/config-gitlab.ini `
+            --branch "$(Get-Location)/source" `
+            --portable
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: openlp-windows
+          path: |
+            dist/*.msi
+            dist/*.exe
+          retention-days: 14
+          if-no-files-found: warn
+
+  publish-release:
+    name: Publish openlp-packaging release
+    needs: [prepare-source, build-flatpak, build-macos, build-windows]
+    if: always() && needs.prepare-source.result == 'success' && (github.event_name == 'repository_dispatch' || github.event.inputs.create_release == 'true')
+    runs-on: synology-runner
+    container:
+      image: alpine:3.20
+    steps:
+      - name: Install tooling
+        run: apk add --no-cache curl jq
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Create release and upload assets
+        env:
+          CI_TOKEN: ${{ secrets.CI_TOKEN }}
+        run: |
+          set -e
+          TAG="build-${{ needs.prepare-source.outputs.plus_tag }}-$(date -u +%Y%m%d%H%M%S)"
+          NAME="OpenLP+ ${{ needs.prepare-source.outputs.plus_tag }} (plugins ${{ needs.prepare-source.outputs.plugins_tag }})"
+          BODY=$(jq -n \
+            --arg tag "$TAG" \
+            --arg name "$NAME" \
+            --arg body "Built from openlp-plus @ ${{ needs.prepare-source.outputs.plus_tag }} and openlp-plugins @ ${{ needs.prepare-source.outputs.plugins_tag }}." \
+            '{tag_name:$tag, name:$name, body:$body, draft:false, prerelease:false, target_commitish:"main"}')
+
+          RELEASE_ID=$(curl -fsSL -X POST \
+            -H "Authorization: token ${CI_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "$BODY" \
+            "${GITHUB_SERVER_URL}/api/v1/repos/${GITHUB_REPOSITORY}/releases" | jq -r .id)
+
+          echo "Release ID: $RELEASE_ID"
+
+          find artifacts -type f \( -name '*.dmg' -o -name '*.msi' -o -name '*.exe' -o -name '*.flatpak' \) \
+            | while read -r asset; do
+            echo "Uploading $asset"
+            curl -fsSL -X POST \
+              -H "Authorization: token ${CI_TOKEN}" \
+              -H "Content-Type: application/octet-stream" \
+              --data-binary "@$asset" \
+              "${GITHUB_SERVER_URL}/api/v1/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?name=$(basename "$asset")"
+          done
