@@ -118,24 +118,21 @@ jobs:
         run: |
           echo -n "${{ needs.prepare-source.outputs.version }}" > source/openlp/.version
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
       - name: Install runtime deps
         run: |
-          brew install icu4c enchant pkg-config || true
-          export PATH="$PATH:/opt/homebrew/opt/icu4c/bin:/opt/homebrew/opt/icu4c/sbin"
-          export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/opt/homebrew/opt/icu4c/lib/pkgconfig"
-          python -m pip install --upgrade pip
-          pip install pyinstaller dmgbuild macholib py-applescript Pyro5
-          pip install -e 'source/.[darkstyle,mysql,odbc,postgresql,spellcheck,sword-bibles]'
+          brew install python@3.12 icu4c enchant pkg-config || true
+          PY=/opt/homebrew/opt/python@3.12/bin/python3.12
+          export PATH="/opt/homebrew/opt/python@3.12/bin:/opt/homebrew/opt/icu4c/bin:/opt/homebrew/opt/icu4c/sbin:$PATH"
+          export PKG_CONFIG_PATH="/opt/homebrew/opt/icu4c/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
+          "$PY" -m pip install --upgrade pip
+          "$PY" -m pip install pyinstaller dmgbuild macholib py-applescript Pyro5
+          "$PY" -m pip install -e 'source/.[darkstyle,mysql,odbc,postgresql,spellcheck,sword-bibles]'
 
       - name: Run macOS builder
         env:
           PYENCHANT_LIBRARY_PATH: /opt/homebrew/lib/libenchant-2.2.dylib
         run: |
-          python builders/macos-builder.py \
+          /opt/homebrew/opt/python@3.12/bin/python3.12 builders/macos-builder.py \
             --release "${{ needs.prepare-source.outputs.plus_tag }}" \
             --skip-update \
             --config macos/config-gitlab.ini \

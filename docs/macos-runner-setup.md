@@ -35,14 +35,21 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 ### 1c. Runtime dependencies the build needs
 
 ```bash
-brew install git node pyenv pkg-config icu4c enchant
+brew install git node python@3.12 pkg-config icu4c enchant
 ```
 
-- `node` — required for Node-based actions (`actions/checkout`, `actions/setup-python`, `upload-artifact`, etc.) in host mode.
-- `pyenv` — used by the workflow to install Python 3.12 inside the job.
+- `node` — required for Node-based actions (`actions/checkout`,
+  `upload-artifact`, etc.) in host mode.
+- `python@3.12` — the workflow uses Homebrew's Python 3.12 directly
+  rather than `actions/setup-python`, because `setup-python`'s macOS
+  binaries are non-relocatable and insist on installing to
+  `/Users/runner/hostedtoolcache` regardless of `AGENT_TOOLSDIRECTORY`.
 - `icu4c`, `enchant` — native deps for PyICU and pyenchant.
 
-> If you already have a Python 3.12 on PATH, `pyenv` is optional.
+The workflow reinvokes `brew install` at job time (idempotently) to
+keep the runtime dependency list version-controlled, so a fresh runner
+will still bootstrap correctly; this step is just to speed up the
+first build.
 
 ---
 
@@ -122,9 +129,9 @@ The `:host` suffix tells act_runner to execute steps directly on macOS (not
 inside a Docker container). This is mandatory for PyInstaller because it
 needs to build against the real macOS SDK and frameworks.
 
-Also replace the placeholder `runner.envs` block with a writable tool-cache
-path, so `actions/setup-python@v5` (and any other action that uses the hosted
-tool cache) doesn't try to create `/Users/runner/hostedtoolcache`:
+Optionally, replace the placeholder `runner.envs` block with a writable
+tool-cache path for any actions that do honour `RUNNER_TOOL_CACHE` /
+`AGENT_TOOLSDIRECTORY` on a self-hosted runner:
 
 ```yaml
 runner:
@@ -133,11 +140,16 @@ runner:
     AGENT_TOOLSDIRECTORY: /Users/<you>/actions-runner/_tool
 ```
 
-Then create the directory:
-
 ```bash
 mkdir -p ~/actions-runner/_tool
 ```
+
+> `actions/setup-python@v5` **ignores these on macOS** — its macOS
+> Python binaries are non-relocatable and always install to the hard-
+> coded `/Users/runner/hostedtoolcache`. This workflow sidesteps the
+> problem by using Homebrew's `python@3.12` directly. The env vars
+> above are still useful for other tool-cache-aware actions you may
+> add later (e.g. `setup-node` on Linux/Windows).
 
 ---
 
