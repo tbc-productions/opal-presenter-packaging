@@ -166,7 +166,7 @@ jobs:
           token: ${{ secrets.CI_TOKEN }}
 
       - name: Stamp version file
-        shell: powershell
+        shell: 'powershell -ExecutionPolicy Bypass -Command ". ''{0}''"'
         run: |
           Set-Content -Path "source/openlp/.version" -Value "${{ needs.prepare-source.outputs.version }}" -NoNewline -Encoding ascii
 
@@ -175,7 +175,7 @@ jobs:
           python-version: '3.14'
 
       - name: Install runtime deps
-        shell: powershell
+        shell: 'powershell -ExecutionPolicy Bypass -Command ". ''{0}''"'
         run: |
           python -m pip install --upgrade pip
           python -m pip install pyinstaller pyodbc pypiwin32
@@ -183,7 +183,7 @@ jobs:
           python -m pip install -e 'source/.[darkstyle,mysql,odbc,postgresql,spellcheck,sword-bibles]'
 
       - name: Run Windows builder
-        shell: powershell
+        shell: 'powershell -ExecutionPolicy Bypass -Command ". ''{0}''"'
         run: |
           python builders/windows-builder.py `
             --release "${{ needs.prepare-source.outputs.plus_tag }}" `
