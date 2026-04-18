@@ -31,7 +31,7 @@ from io import StringIO
 from packaging.version import InvalidVersion, Version
 from pathlib import Path
 from shutil import copy, rmtree
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, STDOUT
 
 BUILDER_DESCRIPTION = 'Build OpenLP for {platform}. Options are provided on both the command line and a ' \
     'configuration file. Options in the configuration file are overridden by the command line options.\n\n' \
@@ -40,6 +40,36 @@ BUILDER_DESCRIPTION = 'Build OpenLP for {platform}. Options are provided on both
     'exported code for building. The two modes are invoked by the presence or absence of the --release ' \
     'option. If this option is omitted, a development build is built, while including the --release ' \
     'option with a version number will produce a build of that exact version.'
+
+
+class _Tee(object):
+    """
+    Write to several streams at once. Used so that output from in-process
+    ``runpy`` invocations (PyInstaller, dmgbuild, ...) is both surfaced live
+    on the real stdout/stderr (so CI logs show progress) and captured into a
+    buffer for diagnostics on failure.
+    """
+    def __init__(self, *streams):
+        self.streams = streams
+
+    def write(self, data):
+        for stream in self.streams:
+            try:
+                stream.write(data)
+            except Exception:
+                pass
+        self.flush()
+        return len(data) if data is not None else 0
+
+    def flush(self):
+        for stream in self.streams:
+            try:
+                stream.flush()
+            except Exception:
+                pass
+
+    def isatty(self):
+        return False
 
 
 def _which(program):
@@ -92,16 +122,26 @@ class Builder(object):
         """
         Run command in subprocess and print error message in case of Exception.
 
-        Return text from stdout.
+        Output is streamed line-by-line to this process's stdout while it runs
+        (so CI logs show live progress instead of going silent for minutes at
+        a time) and is also captured for the return value. stderr is merged
+        into stdout to keep ordering intact and avoid a second read loop.
+
+        Return ``(output, '')`` for backwards compatibility with callers that
+        unpack two values.
         """
-        proc = Popen(cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
-        output, error = proc.communicate()
+        proc = Popen(cmd, stdout=PIPE, stderr=STDOUT, bufsize=1, universal_newlines=True)
+        captured = []
+        assert proc.stdout is not None
+        for line in proc.stdout:
+            sys.stdout.write(line)
+            sys.stdout.flush()
+            captured.append(line)
         code = proc.wait()
+        output = ''.join(captured)
         if code != exit_code:
-            self._print(output)
-            self._print(error)
             raise Exception(err_msg)
-        return output, error
+        return output, ''
 
     def _run_module(self, module, argv, err_msg, run_name=None):
         """
@@ -117,16 +157,18 @@ class Builder(object):
 
     def _run_runpy(self, run_type, exe_arg, argv, err_msg, run_name=None):
         """
-        Run a python script or module
+        Run a python script or module.
+
+        stdout and stderr are tee'd to the real streams (so PyInstaller,
+        dmgbuild, etc. report progress live in CI) while still being captured
+        in a buffer for the error path.
         """
-        # Capture stdout and stderr
         stdout_back = sys.stdout
         stderr_back = sys.stderr
         new_stdout = StringIO()
         new_stderr = StringIO()
-        sys.stdout = new_stdout
-        sys.stderr = new_stderr
-        # Set args
+        sys.stdout = _Tee(stdout_back, new_stdout)
+        sys.stderr = _Tee(stderr_back, new_stderr)
         sys.argv = argv
         exit_code: str | int = 0
         try:
@@ -139,16 +181,10 @@ class Builder(object):
             if se.code and se.code != 0:
                 exit_code = se.code
         finally:
-            # Set stdout and stderr back to standard
             sys.stdout = stdout_back
             sys.stderr = stderr_back
         if exit_code != 0:
-            self._print(new_stdout.getvalue())
-            self._print(new_stderr.getvalue())
             raise Exception(err_msg)
-        else:
-            self._print_verbose(new_stdout.getvalue())
-            self._print_verbose(new_stderr.getvalue())
 
     def _git(self, command, work_path, args=[], err_msg='There was an error running git'):
         """
@@ -371,7 +407,7 @@ class Builder(object):
         if self.args.verbose:
             cmd.append('--log-level=DEBUG')
         else:
-            cmd.append('--log-level=ERROR')
+            cmd.append('--log-level=INFO')
         if self.args.debug:
             cmd.append('-d')
         self._run_module('PyInstaller', cmd, 'Error running PyInstaller', run_name='__main__')

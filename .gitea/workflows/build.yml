@@ -231,9 +231,10 @@ jobs:
       - name: Run macOS builder
         env:
           PYENCHANT_LIBRARY_PATH: /opt/homebrew/lib/libenchant-2.2.dylib
+          PYTHONUNBUFFERED: "1"
         run: |
           export PATH="$(pwd)/.venv/bin:/opt/homebrew/opt/python@3.14/bin:/opt/homebrew/opt/icu4c/bin:/opt/homebrew/opt/icu4c/sbin:$PATH"
-          .venv/bin/python builders/macos-builder.py \
+          .venv/bin/python -u builders/macos-builder.py \
             --release "${{ needs.prepare-source.outputs.plus_tag }}" \
             --skip-update \
             --config macos/config-gitlab.ini \
@@ -296,8 +297,10 @@ jobs:
 
       - name: Run Windows builder
         shell: bash
+        env:
+          PYTHONUNBUFFERED: "1"
         run: |
-          python builders/windows-builder.py \
+          python -u builders/windows-builder.py \
             --release "${{ needs.prepare-source.outputs.plus_tag }}" \
             --skip-update \
             --config windows/config-gitea.ini \
