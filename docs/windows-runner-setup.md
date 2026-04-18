@@ -16,7 +16,8 @@ Install these on the Windows machine:
 - **Git for Windows** — <https://gitforwindows.org/>
 - **Node.js LTS** — <https://nodejs.org/> (required for Node-based actions like
   `actions/checkout` when the runner is in host mode)
-- **Python 3.12** — <https://www.python.org/downloads/> (tick *Add to PATH*)
+- **Python 3.14** — <https://www.python.org/downloads/> (tick *Add to PATH*;
+  install for all users so the LocalSystem service account can see it)
 - **PowerShell 7** *(optional but nicer)* — `winget install Microsoft.PowerShell`
 - **WiX Toolset** — `choco install wixtoolset` (needed by `windows-builder.py`
   for MSI creation)

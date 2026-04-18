@@ -64,9 +64,9 @@ build from an upstream trigger.
   source tree itself from the resolved tag, so there's no source
   artifact round-trip.
 - `build-flatpak` — builds the Flatpak bundle. Off by default.
-- `build-macos` — installs Python 3.12, runtime deps via Homebrew,
+- `build-macos` — installs Python 3.14, runtime deps via Homebrew,
   then runs `builders/macos-builder.py` to produce a `.dmg`.
-- `build-windows` — installs Python 3.12, deps via pip (incl.
+- `build-windows` — installs Python 3.14, deps via pip (incl.
   PyICU wheel), then runs `builders/windows-builder.py` to produce
   `.msi` and portable `.exe`.
 - `publish-release` — downloads every artifact, creates a tagged

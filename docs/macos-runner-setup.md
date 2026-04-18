@@ -35,15 +35,17 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 ### 1c. Runtime dependencies the build needs
 
 ```bash
-brew install git node python@3.12 pkg-config icu4c enchant
+brew install git node python@3.14 pkg-config icu4c enchant
 ```
 
 - `node` — required for Node-based actions (`actions/checkout`,
   `upload-artifact`, etc.) in host mode.
-- `python@3.12` — the workflow uses Homebrew's Python 3.12 directly
+- `python@3.14` — the workflow uses Homebrew's Python 3.14 directly
   rather than `actions/setup-python`, because `setup-python`'s macOS
   binaries are non-relocatable and insist on installing to
   `/Users/runner/hostedtoolcache` regardless of `AGENT_TOOLSDIRECTORY`.
+  Homebrew's python is PEP 668 "externally managed", so the build job
+  creates a dedicated venv under `.venv/` before running pip.
 - `icu4c`, `enchant` — native deps for PyICU and pyenchant.
 
 The workflow reinvokes `brew install` at job time (idempotently) to
@@ -147,7 +149,7 @@ mkdir -p ~/actions-runner/_tool
 > `actions/setup-python@v5` **ignores these on macOS** — its macOS
 > Python binaries are non-relocatable and always install to the hard-
 > coded `/Users/runner/hostedtoolcache`. This workflow sidesteps the
-> problem by using Homebrew's `python@3.12` directly. The env vars
+> problem by using Homebrew's `python@3.14` directly. The env vars
 > above are still useful for other tool-cache-aware actions you may
 > add later (e.g. `setup-node` on Linux/Windows).
 
