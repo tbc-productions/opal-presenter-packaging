@@ -27,8 +27,8 @@ Install these on the Windows machine:
   when the workflow passes `--portable` (it does by default). Download and run
   the installers from <https://portableapps.com/apps/development>; accept the
   default install location so they land in
-  `C:\Program Files (x86)\PortableApps.comLauncher\` and
-  `C:\Program Files (x86)\PortableApps.comInstaller\` — which is what
+  `C:\PortableApps\PortableApps.comLauncher\` and
+  `C:\PortableApps\PortableApps.comInstaller\` — which is what
   `windows/config-gitea.ini` expects. If you install elsewhere, edit that
   config's `[executables]` section to match.
 
@@ -377,7 +377,7 @@ service.
 The PortableApps Launcher and/or Installer aren't installed where
 `windows/config-gitea.ini` is looking for them. Install both tools from
 <https://portableapps.com/apps/development> with the default install
-location (`C:\Program Files (x86)\PortableApps.com*`), or edit the
+location (`C:\PortableApps\PortableApps.com*`), or edit the
 `[executables]` section of `windows/config-gitea.ini` to point at wherever
 you put them.
 
