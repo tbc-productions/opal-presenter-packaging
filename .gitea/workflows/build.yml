@@ -279,7 +279,7 @@ jobs:
 
   publish-release:
     name: Publish openlp-packaging release
-    needs: [prepare-source, build-macos, build-windows, build-flatpak]
+    needs: [prepare-source, build-macos, build-windows]
     if: >-
       always()
       && needs.prepare-source.result == 'success'
@@ -301,11 +301,10 @@ jobs:
           RELEASE_ID: ${{ needs.prepare-source.outputs.release_id }}
           MACOS_RESULT: ${{ needs.build-macos.result }}
           WINDOWS_RESULT: ${{ needs.build-windows.result }}
-          FLATPAK_RESULT: ${{ needs.build-flatpak.result }}
         run: |
           set -e
           ANY_SUCCESS=0
-          for r in "$MACOS_RESULT" "$WINDOWS_RESULT" "$FLATPAK_RESULT"; do
+          for r in "$MACOS_RESULT" "$WINDOWS_RESULT"; do
             [ "$r" = "success" ] && ANY_SUCCESS=1
           done
 
