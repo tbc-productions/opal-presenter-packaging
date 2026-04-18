@@ -35,13 +35,13 @@ iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocola
 
 ## 2. Get a registration token from Gitea
 
-1. Sign in to <https://git.tbcproductions.net> as an admin.
-2. Go to **Org `tbcproductions` → Settings → Actions → Runners → Create new Runner**
+1. Sign in to `https://<your-gitea-host>` as an admin.
+2. Go to **Org `<your-org>` → Settings → Actions → Runners → Create new Runner**
    (or *Site Administration → Actions → Runners* for an instance-wide runner).
 3. Copy the token. Looks like `3gJBmN...`.
 
-> Org-scoped tokens are preferred — only `tbcproductions` jobs can schedule
-> onto your PC.
+> Org-scoped tokens are preferred — only your org's jobs can schedule onto
+> your PC.
 
 ---
 
@@ -70,7 +70,7 @@ cd C:\actions-runner
 
 .\act_runner.exe register `
   --no-interactive `
-  --instance https://git.tbcproductions.net `
+  --instance https://<your-gitea-host> `
   --token <PASTE_TOKEN_HERE> `
   --name "$($env:COMPUTERNAME)-windows" `
   --labels "windows,self-hosted,Windows,X64"
@@ -164,7 +164,7 @@ nssm install gitea-actions-runner `
 
 nssm set gitea-actions-runner AppDirectory C:\actions-runner
 nssm set gitea-actions-runner DisplayName "Gitea Actions Runner"
-nssm set gitea-actions-runner Description "act_runner daemon for git.tbcproductions.net"
+nssm set gitea-actions-runner Description "Gitea Actions runner (act_runner daemon)"
 nssm set gitea-actions-runner Start SERVICE_AUTO_START
 nssm set gitea-actions-runner AppStdout C:\actions-runner\runner.log
 nssm set gitea-actions-runner AppStderr C:\actions-runner\runner.err
@@ -211,8 +211,8 @@ and the service status should be `Running`.
 
 ## 8. Confirm Gitea sees it
 
-1. Open <https://git.tbcproductions.net>
-2. Go to **Org `tbcproductions` → Settings → Actions → Runners**.
+1. Open `https://<your-gitea-host>`.
+2. Go to **Org `<your-org>` → Settings → Actions → Runners**.
 3. The runner should be **Idle / green**.
 4. Confirm the labels listed include `windows` exactly (case sensitive).
 
@@ -220,7 +220,7 @@ and the service status should be `Running`.
 
 ## 9. Trigger a test run
 
-1. On Gitea: `tbcproductions/openlp-packaging` → *Actions* → *Build OpenLP+* →
+1. On Gitea: `<your-org>/openlp-packaging` → *Actions* → *Build OpenLP+* →
    *Run workflow* → leave inputs blank → *Run*.
 2. Watch the `build-windows` job. It should go **Queued → Running** as soon
    as the Synology runner finishes `prepare-source`.

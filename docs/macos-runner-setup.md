@@ -48,13 +48,13 @@ brew install git node pyenv pkg-config icu4c enchant
 
 ## 2. Get a registration token from Gitea
 
-1. Sign in to <https://git.tbcproductions.net> as an admin.
-2. Go to **Org `tbcproductions` → Settings → Actions → Runners → Create new Runner**
+1. Sign in to `https://<your-gitea-host>` as an admin.
+2. Go to **Org `<your-org>` → Settings → Actions → Runners → Create new Runner**
    (or *Site Administration → Actions → Runners* for an instance-wide runner).
 3. Copy the token. Looks like `3gJBmN...`.
 
-> Org-scoped tokens are preferred — only `tbcproductions` jobs can schedule
-> onto your Mac.
+> Org-scoped tokens are preferred — only your org's jobs can schedule onto
+> your Mac.
 
 ---
 
@@ -86,7 +86,7 @@ mkdir -p ~/actions-runner && cd ~/actions-runner
 
 act_runner register \
   --no-interactive \
-  --instance https://git.tbcproductions.net \
+  --instance https://<your-gitea-host> \
   --token <PASTE_TOKEN_HERE> \
   --name "$(hostname)-macos" \
   --labels "macos,self-hosted,macOS,ARM64"
@@ -162,13 +162,13 @@ Replace `/opt/homebrew/bin/act_runner` with the path printed by
 ACT_RUNNER_BIN="$(command -v act_runner)"
 RUNNER_DIR="$HOME/actions-runner"
 
-cat > ~/Library/LaunchAgents/net.tbcproductions.actrunner.plist <<EOF
+cat > ~/Library/LaunchAgents/local.actrunner.plist <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>net.tbcproductions.actrunner</string>
+  <string>local.actrunner</string>
 
   <key>ProgramArguments</key>
   <array>
@@ -206,16 +206,16 @@ EOF
 ### 7b. Load and start it
 
 ```bash
-launchctl unload ~/Library/LaunchAgents/net.tbcproductions.actrunner.plist 2>/dev/null
-launchctl load  ~/Library/LaunchAgents/net.tbcproductions.actrunner.plist
+launchctl unload ~/Library/LaunchAgents/local.actrunner.plist 2>/dev/null
+launchctl load  ~/Library/LaunchAgents/local.actrunner.plist
 ```
 
 ### 7c. Verify it stays running
 
 ```bash
-launchctl list | grep tbcproductions
+launchctl list | grep actrunner
 # PID   Status  Label
-# 12345 0       net.tbcproductions.actrunner
+# 12345 0       local.actrunner
 
 tail -n 50 -f ~/actions-runner/runner.log
 ```
@@ -236,8 +236,8 @@ INFO Runner: mymac-macos, ..., is online and listening
 
 ## 8. Confirm Gitea sees it
 
-1. Open <https://git.tbcproductions.net>.
-2. Go to **Org `tbcproductions` → Settings → Actions → Runners**.
+1. Open `https://<your-gitea-host>`.
+2. Go to **Org `<your-org>` → Settings → Actions → Runners**.
 3. The runner should be **Idle / green**.
 4. Confirm the labels listed include `macos` exactly (case sensitive).
 
@@ -245,7 +245,7 @@ INFO Runner: mymac-macos, ..., is online and listening
 
 ## 9. Trigger a test run
 
-1. On Gitea: `tbcproductions/openlp-packaging` → *Actions* → *Build OpenLP+* →
+1. On Gitea: `<your-org>/openlp-packaging` → *Actions* → *Build OpenLP+* →
    *Run workflow* → leave inputs blank → *Run*.
 2. Watch the `build-macos` job. It should go **Queued → Running** as soon as
    the Synology runner finishes `prepare-source`.
@@ -258,7 +258,7 @@ INFO Runner: mymac-macos, ..., is online and listening
 ### Service doesn't start / `launchctl load` is silent but nothing happens
 
 ```bash
-launchctl error net.tbcproductions.actrunner
+launchctl error local.actrunner
 tail -n 100 ~/actions-runner/runner.err
 ```
 
@@ -278,8 +278,8 @@ inside a Docker container that doesn't exist on macOS. Edit `config.yaml` so
 every label ends with `:host`, then reload:
 
 ```bash
-launchctl unload ~/Library/LaunchAgents/net.tbcproductions.actrunner.plist
-launchctl load   ~/Library/LaunchAgents/net.tbcproductions.actrunner.plist
+launchctl unload ~/Library/LaunchAgents/local.actrunner.plist
+launchctl load   ~/Library/LaunchAgents/local.actrunner.plist
 ```
 
 ### `brew`, `pyenv`, etc. not found during a job
@@ -302,10 +302,10 @@ or keep a per-runner override.
 ### Updating the runner
 
 ```bash
-launchctl unload ~/Library/LaunchAgents/net.tbcproductions.actrunner.plist
+launchctl unload ~/Library/LaunchAgents/local.actrunner.plist
 brew upgrade act-runner
 # or: replace the act_runner binary manually
-launchctl load   ~/Library/LaunchAgents/net.tbcproductions.actrunner.plist
+launchctl load   ~/Library/LaunchAgents/local.actrunner.plist
 ```
 
 ---
@@ -313,8 +313,8 @@ launchctl load   ~/Library/LaunchAgents/net.tbcproductions.actrunner.plist
 ## Uninstall (if needed)
 
 ```bash
-launchctl unload ~/Library/LaunchAgents/net.tbcproductions.actrunner.plist
-rm ~/Library/LaunchAgents/net.tbcproductions.actrunner.plist
+launchctl unload ~/Library/LaunchAgents/local.actrunner.plist
+rm ~/Library/LaunchAgents/local.actrunner.plist
 rm -rf ~/actions-runner
 brew uninstall act-runner   # if installed via Homebrew
 ```
