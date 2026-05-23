@@ -225,10 +225,10 @@ jobs:
 
       - name: Install runtime deps
         run: |
-          brew install python@3.14 icu4c enchant pkg-config || true
+          brew install python@3.14 icu4c enchant pkg-config libpq || true
           PY=/opt/homebrew/opt/python@3.14/bin/python3.14
-          export PATH="/opt/homebrew/opt/python@3.14/bin:/opt/homebrew/opt/icu4c/bin:/opt/homebrew/opt/icu4c/sbin:$PATH"
-          export PKG_CONFIG_PATH="/opt/homebrew/opt/icu4c/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
+          export PATH="/opt/homebrew/opt/python@3.14/bin:/opt/homebrew/opt/icu4c/bin:/opt/homebrew/opt/icu4c/sbin:/opt/homebrew/opt/libpq/bin:$PATH"
+          export PKG_CONFIG_PATH="/opt/homebrew/opt/icu4c/lib/pkgconfig:/opt/homebrew/opt/libpq/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
           "$PY" -m venv .venv
           .venv/bin/python -m pip install --upgrade pip
           .venv/bin/python -m pip install pyinstaller dmgbuild macholib py-applescript Pyro5
