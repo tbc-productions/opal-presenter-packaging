@@ -301,9 +301,7 @@ class WindowsBuilder(Builder):
                            '-ext', 'WixFirewallExtension', wxs_path],
                           'Error running WiX tool: candle')
         self._run_command([self.light_exe, '-ext', 'WiXUtilExtension', '-ext', 'WixUIExtension',
-                           '-ext', 'WixFirewallExtension', '-sice:ICE01', '-sice:ICE02', '-sice:ICE03',
-                           '-sice:ICE04', '-sice:ICE05', '-sice:ICE06', '-sice:ICE07', '-sice:ICE09',
-                           '-sice:ICE60', '-sice:ICE61', 'OpenLPPlus.wixobj',
+                           '-ext', 'WixFirewallExtension', '-sval', 'OpenLPPlus.wixobj',
                            '-o', msi_file],
                           'Error running WiX tool: light')
 
