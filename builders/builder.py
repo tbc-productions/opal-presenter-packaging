@@ -295,7 +295,12 @@ class Builder(object):
         Set up the paths to the executables we use.
         """
         self._print_verbose('Executables:')
+        # Ignore inherited config defaults here; they are interpolation values,
+        # not executable entries that should be resolved on PATH.
+        default_names = set(self.config.defaults())
         for executable in self.config.options('executables'):
+            if executable in default_names:
+                continue
             raw = self.config.get('executables', executable)
             if not raw.strip():
                 path = None
