@@ -104,6 +104,7 @@ like this:
 import glob
 import os
 import platform
+import sys
 from pathlib import Path
 from shutil import copy, copytree, move, rmtree
 
@@ -288,8 +289,9 @@ class MacOSBuilder(Builder):
         """
         self._print('Installing Pyro5 for LibreOffice')
         target = os.path.join(self.dist_path, 'plugins', 'presentations', 'lib', 'vendor')
-        argv = ['pip', 'install', 'Pyro5', '-t', target, '--disable-pip-version-check', '--no-compile']
-        self._run_module('pip', argv, 'Error installing Pyro5 with pip', run_name='__main__')
+        argv = [sys.executable, '-m', 'pip', 'install', 'Pyro5', '-t', target,
+                '--disable-pip-version-check', '--no-compile']
+        self._run_command(argv, 'Error installing Pyro5 with pip')
         egg_info_glob = glob.glob(os.path.join(target, '*.egg-info'))
         egg_info_glob.extend(glob.glob(os.path.join(target, '*.dist-info')))
         self._print_verbose('... glob: {}'.format(egg_info_glob))
