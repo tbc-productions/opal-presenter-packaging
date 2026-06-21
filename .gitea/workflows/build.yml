@@ -286,7 +286,7 @@ jobs:
           fetch-tags: true
 
       - name: Stamp version file
-        shell: pwsh
+        shell: powershell
         run: |
           [System.IO.File]::WriteAllText("source/openlp/.version", "${{ needs.prepare-source.outputs.version }}")
 
