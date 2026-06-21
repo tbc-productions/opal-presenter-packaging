@@ -331,22 +331,41 @@ jobs:
             exit 0
           }
           $base = "$env:GITHUB_SERVER_URL/api/v1/repos/$env:RELEASE_REPO/releases/$env:RELEASE_ID/assets"
-          $headers = @{ Authorization = "token $env:CI_TOKEN" }
+          $authHeader = "Authorization: token $env:CI_TOKEN"
+          # Build optional ORIGIN_IP bypass args (mirrors the bash upload script)
+          $bypassArgs = @()
+          if ($env:ORIGIN_IP) {
+            $host_ = ($env:GITHUB_SERVER_URL -replace '^https?://', '') -replace '/.*', ''
+            $urlPort = if ($env:GITHUB_SERVER_URL -match '^https') { '443' } else { '80' }
+            if ($env:ORIGIN_IP -match ':') {
+              $originIp   = $env:ORIGIN_IP -replace ':.*', ''
+              $originPort = $env:ORIGIN_IP -replace '.*:', ''
+            } else {
+              $originIp   = $env:ORIGIN_IP
+              $originPort = $urlPort
+            }
+            $bypassArgs = @('--connect-to', "${host_}:${urlPort}:${originIp}:${originPort}", '-k')
+            Write-Host "Bypassing proxy via ${host_}:${urlPort} -> ${originIp}:${originPort} (TLS verification disabled)"
+          }
           foreach ($asset in $assets) {
             $assetName = $asset.Name
             Write-Host "Uploading $($asset.FullName)"
             # Delete existing asset with same name if present
-            $existing = Invoke-RestMethod -Uri $base -Headers $headers -Method Get
-            $existingAsset = $existing | Where-Object { $_.name -eq $assetName }
-            if ($existingAsset) {
-              Write-Host "Deleting existing asset $assetName (id=$($existingAsset.id))"
-              Invoke-RestMethod -Uri "$base/$($existingAsset.id)" -Headers $headers -Method Delete
+            $listJson = curl.exe -fsSL @bypassArgs -H $authHeader $base
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            $existing = ($listJson | ConvertFrom-Json) | Where-Object { $_.name -eq $assetName }
+            if ($existing) {
+              Write-Host "Deleting existing asset $assetName (id=$($existing.id))"
+              curl.exe -fsSL @bypassArgs -X DELETE -H $authHeader "$base/$($existing.id)"
+              if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
             }
             # Upload new asset
-            $uploadHeaders = $headers + @{ 'Content-Type' = 'application/octet-stream' }
-            Invoke-RestMethod -Uri "$($base)?name=$assetName" `
-              -Headers $uploadHeaders -Method Post `
-              -InFile $asset.FullName
+            curl.exe -fsSL @bypassArgs -X POST `
+              -H $authHeader `
+              -H "Content-Type: application/octet-stream" `
+              --data-binary "@$($asset.FullName)" `
+              "$($base)?name=$assetName"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
 
   publish-release:
