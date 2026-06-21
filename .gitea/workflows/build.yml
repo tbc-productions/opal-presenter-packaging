@@ -286,9 +286,9 @@ jobs:
           fetch-tags: true
 
       - name: Stamp version file
-        shell: bash
+        shell: pwsh
         run: |
-          printf '%s' "${{ needs.prepare-source.outputs.version }}" > source/openlp/.version
+          [System.IO.File]::WriteAllText("source/openlp/.version", "${{ needs.prepare-source.outputs.version }}")
 
       - uses: actions/setup-python@v5
         with:
