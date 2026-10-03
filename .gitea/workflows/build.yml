@@ -232,6 +232,11 @@ jobs:
           "$PY" -m venv .venv
           .venv/bin/python -m pip install --upgrade pip
           .venv/bin/python -m pip install pyinstaller dmgbuild macholib py-applescript Pyro5
+          if [ -f source/scripts/build_fluentqt.py ]; then
+            .venv/bin/python -m pip install cmake ninja aqtinstall "PySide6==6.11.1" "shiboken6_generator==6.11.1"
+            .venv/bin/python -m aqt install-qt mac desktop 6.11.1 clang_64 --archives qtbase -O .cache/qt
+            .venv/bin/python source/scripts/build_fluentqt.py --qt-prefix .cache/qt/6.11.1/macos --install
+          fi
           .venv/bin/python -m pip install -e 'source/.[darkstyle,mysql,odbc,postgresql,spellcheck,sword-bibles]'
 
       - name: Run macOS builder
@@ -294,13 +299,29 @@ jobs:
         with:
           python-version: '3.14'
 
+      - uses: ilammy/msvc-dev-cmd@v1
+
       - name: Install runtime deps
         shell: powershell
         run: |
           python -m pip install --upgrade pip
           python -m pip install pyinstaller pyodbc pypiwin32
           python -m pip install https://github.com/cgohlke/pyicu-build/releases/download/v2.16.2/pyicu-2.16.2-cp314-cp314-win_amd64.whl
-          python -m pip install -e "source/.[darkstyle,mysql,odbc,postgresql,spellcheck,sword-bibles]"
+          if (Test-Path source/scripts/build_fluentqt.py) {
+            # Build tools must be adjacent to the build interpreter. Keep the
+            # builder's existing system interpreter and install the wheel there.
+            python -m venv .cache/fluentqt-build-env
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            $buildPython = '.cache/fluentqt-build-env/Scripts/python.exe'
+            & $buildPython -m pip install cmake ninja aqtinstall "PySide6==6.11.1" "shiboken6_generator==6.11.1"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            & $buildPython -m aqt install-qt windows desktop 6.11.1 win64_msvc2022_64 --archives qtbase -O .cache/qt
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            & $buildPython source/scripts/build_fluentqt.py --qt-prefix .cache/qt/6.11.1/msvc2022_64
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          python -m pip install --find-links .cache/fluentqt/wheelhouse -e "source/.[darkstyle,mysql,odbc,postgresql,spellcheck,sword-bibles]"
+          exit $LASTEXITCODE
 
       - name: Run Windows builder
         shell: powershell
