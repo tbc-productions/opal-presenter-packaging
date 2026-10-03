@@ -313,7 +313,8 @@ jobs:
             python -m venv .cache/fluentqt-build-env
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
             $buildPython = '.cache/fluentqt-build-env/Scripts/python.exe'
-            & $buildPython -m pip install cmake ninja aqtinstall "PySide6==6.11.1" "shiboken6_generator==6.11.1"
+            # Qt 6.11 Windows repositories are split by compiler; PyPI 3.3.0 uses the old layout.
+            & $buildPython -m pip install cmake ninja "aqtinstall @ git+https://github.com/miurahr/aqtinstall.git@076e1659807d0b362a3ed684d54c2e9c775eb9c7" "PySide6==6.11.1" "shiboken6_generator==6.11.1"
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
             & $buildPython -m aqt install-qt windows desktop 6.11.1 win64_msvc2022_64 --archives qtbase -O .cache/qt
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
