@@ -273,6 +273,8 @@ jobs:
 
   build-windows:
     name: Build Windows (.msi / portable)
+    env:
+      PYTHONUTF8: '1'
     needs: prepare-source
     if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.build_windows != 'false') || (github.event_name == 'repository_dispatch' && github.event.client_payload.build_windows != false) }}
     runs-on: windows
