@@ -29,7 +29,7 @@ For this script to work out of the box, it depends on a number of things:
 Python 3.12
 
 PySide6
-    You should already have this installed, OpenLP+ doesn't work without it. The
+    You should already have this installed, Opal Presenter doesn't work without it. The
     version the script expects is the packaged one available from pypi.
 
 PyEnchant
@@ -46,14 +46,14 @@ PyInstaller
 Git
     You need the command line "git" client installed.
 
-OpenLP+
+Opal Presenter
     A checkout of the latest code, in a branch directory, which is in a Bazaar
     shared repository directory. This means your code should be in a directory
     structure like this: "openlp\\branch-name".
 
 windows-builder.py
     This script, of course. It should be in the "windows-installer" directory
-    at the same level as the OpenLP+ source tree.
+    at the same level as the Opal Presenter source tree.
 
 Mako
     Mako Templates for Python.  This package is required for building the
@@ -65,7 +65,7 @@ Mako
 
 Portable App Builds
     The following are required if you are planning to make a portable build of
-    OpenLP+.  The portable build conforms to the standards published by
+    Opal Presenter.  The portable build conforms to the standards published by
     PortableApps.com:
 
         http://portableapps.com/development/portableapps.com_format
@@ -102,9 +102,9 @@ class WindowsBuilder(Builder):
     The :class:`WindowsBuilder` class encapsulates everything that is needed
     to build a Windows installer.
     """
-    # Must match ``-n`` in :meth:`Builder.run_pyinstaller` (OpenLP+ packaging).
-    windows_dist_name = 'OpenLP+'
-    windows_main_exe = 'OpenLP+.exe'
+    # Must match ``-n`` in :meth:`Builder.run_pyinstaller` (Opal Presenter packaging).
+    windows_dist_name = 'Opal Presenter'
+    windows_main_exe = 'Opal Presenter.exe'
 
     # Make mypy happy
     program_files: str
@@ -190,35 +190,27 @@ class WindowsBuilder(Builder):
                     self._openlp_id = source_id
                     file_.set('KeyPath', 'yes')
                     fw_program = '[#{}]'.format(source_id)
-                    component.append(FxE.FirewallException(Id='OpenLPPlus_TCP', Name='$(var.ProductName)',
+                    component.append(FxE.FirewallException(Id='OpalPresenter_TCP', Name='$(var.ProductName)',
                                                            IgnoreFailure='yes', Program=fw_program,
                                                            Protocol='tcp', Scope='any'))
-                    component.append(FxE.FirewallException(Id='OpenLPPlus_UDP', Name='$(var.ProductName)',
+                    component.append(FxE.FirewallException(Id='OpalPresenter_UDP', Name='$(var.ProductName)',
                                                            IgnoreFailure='yes', Program=fw_program,
                                                            Protocol='udp', Scope='any'))
                     component.append(E.Shortcut(Id='ApplicationStartMenuShortcut', Name='$(var.ProductName)',
                                                 Description='$(var.Description)', Directory='ProgramMenuDir',
-                                                Icon='OpenLPPlus.ico', Advertise='yes', WorkingDirectory='INSTALLDIR'))
+                                                Icon='OpalPresenter.ico', Advertise='yes', WorkingDirectory='INSTALLDIR'))
                     component.append(E.Shortcut(Id='DebugStartMenuShortcut', Name='$(var.ProductName) (Debug)',
                                                 Description='Run $(var.ProductName) with debug logging enabled',
                                                 Directory='ProgramMenuDir', Arguments='--log-level debug',
-                                                Icon='OpenLPPlus.ico', Advertise='yes', WorkingDirectory='INSTALLDIR'))
-                    component.append(E.ProgId(
-                        E.Extension(
-                            E.Verb(Id="Open", Command="Open", Argument=" &quot;%1&quot;"),
-                            E.MIME(Advertise="yes", ContentType="application/-x-openlp-service", Default="yes"),
-                            Id="osz"
-                        ),
-                        E.Extension(
-                            E.Verb(Id="Open", Command="Open", Argument=" &quot;%1&quot;"),
-                            E.MIME(Advertise="yes", ContentType="application/-x-openlp-service-lite", Default="yes"),
-                            Id="oszl"
-                        ),
-                        Id="OpenLPPlus.Service",
-                        Description="OpenLP+ service file",
-                        Icon="service_file.ico",
-                        Advertise="yes"
-                    ))
+                                                Icon='OpalPresenter.ico', Advertise='yes', WorkingDirectory='INSTALLDIR'))
+                    for kind in ('service', 'service-lite', 'song', 'slides', 'theme', 'settings', 'styles', 'connection'):
+                        component.append(E.ProgId(
+                            E.Extension(
+                                E.Verb(Id="Open", Command="Open", Argument=" &quot;%1&quot;"),
+                                E.MIME(Advertise="yes", ContentType="application/x-opal-" + kind, Default="yes"),
+                                Id="opal-" + kind),
+                            Id="OpalPresenter." + kind, Description="Opal Presenter " + kind,
+                            Icon="service_file.ico", Advertise="yes"))
                 element.append(component)
                 components.append(component)
         return component_ids
@@ -230,7 +222,7 @@ class WindowsBuilder(Builder):
         self._print('Creating WiX file...')
         config_dir = os.path.dirname(self.config_path)
         self._print_verbose('Reading base WiX file')
-        with open(os.path.join(config_dir, 'OpenLPPlus-base.wxs'), 'rt') as base_file:
+        with open(os.path.join(config_dir, 'OpalPresenter-base.wxs'), 'rt') as base_file:
             xml = base_file.read()
         if '.dev' in self.version:
             windows_version = self.version.replace('.dev', '.')
@@ -266,7 +258,7 @@ class WindowsBuilder(Builder):
                              namespaces={'wix': 'http://schemas.microsoft.com/wix/2006/wi'})[0]
         for component_id in component_ids:
             feature.append(E.ComponentRef(Id=component_id))
-        wxs_path = os.path.join(config_dir, 'OpenLPPlus.wxs')
+        wxs_path = os.path.join(config_dir, 'OpalPresenter.wxs')
         self._print_verbose('Writing new WiX file to %s', wxs_path)
         tree = ElementTree(root)
         with open(wxs_path, 'wb') as f:
@@ -286,12 +278,12 @@ class WindowsBuilder(Builder):
             version = '{}-x64'.format(self.version)
         else:
             version = self.version
-        msi_file = os.path.abspath(os.path.join(self.dist_path, '..', 'OpenLPPlus-{}.msi'.format(version)))
+        msi_file = os.path.abspath(os.path.join(self.dist_path, '..', 'OpalPresenter-{}.msi'.format(version)))
         if os.path.exists(msi_file):
             self._print_verbose('Removing old MSI file')
             os.unlink(msi_file)
         config_dir = os.path.dirname(self.config_path)
-        wxs_path = os.path.join(config_dir, 'OpenLPPlus.wxs')
+        wxs_path = os.path.join(config_dir, 'OpalPresenter.wxs')
         if not os.path.isfile(wxs_path):
             raise Exception('WiX source not found at {} (directory contents: {})'.format(
                 wxs_path, os.listdir(config_dir) if os.path.isdir(config_dir) else '<dir missing>'))
@@ -301,7 +293,7 @@ class WindowsBuilder(Builder):
                            '-ext', 'WixFirewallExtension', wxs_path],
                           'Error running WiX tool: candle')
         self._run_command([self.light_exe, '-ext', 'WiXUtilExtension', '-ext', 'WixUIExtension',
-                           '-ext', 'WixFirewallExtension', '-sval', 'OpenLPPlus.wixobj',
+                           '-ext', 'WixFirewallExtension', '-sval', 'OpalPresenter.wixobj',
                            '-o', msi_file],
                           'Error running WiX tool: light')
 
@@ -359,7 +351,7 @@ class WindowsBuilder(Builder):
         if os.path.exists(self.portable_dest_path):
             rmtree(self.portable_dest_path)
         self._print_verbose('... Creating PortableApps build directory')
-        # Copy the contents of the OpenLPPlusPortable template into the
+        # Copy the contents of the OpalPresenterPortable template into the
         # portable build directory.
         dir_util.copy_tree(self.portable_source_path, self.portable_dest_path)
         self._create_portableapp_structure()
@@ -384,7 +376,7 @@ class WindowsBuilder(Builder):
         if len(matches) > 1:
             self._print_verbose('Multiple .paf.exe found, using {}'.format(built_paf))
         slug = self.filename_version_slug()
-        final_portable = 'OpenLPPlus-{}-{}-portable.exe'.format(slug, self.arch)
+        final_portable = 'OpalPresenter-{}-{}-portable.exe'.format(slug, self.arch)
         dest = os.path.join(self.dist_path, '..', final_portable)
         self._print_verbose('... Portable build: {} -> {}'.format(built_paf, dest))
         move(built_paf, dest)
@@ -422,7 +414,7 @@ class WindowsBuilder(Builder):
         Add extra arguments to the command line argument parser
         """
         parser.add_argument('--portable', action='store_true', default=False,
-                            help='Build a PortableApps.com build of OpenLP+ too')
+                            help='Build a PortableApps.com build of Opal Presenter too')
 
     def setup_system_paths(self):
         """
@@ -505,8 +497,8 @@ class WindowsBuilder(Builder):
         Copy all the Windows-specific files.
         """
         self._print('Copying extra files for Windows...')
-        self._print_verbose('... OpenLPPlus.ico')
-        copy(self.icon_path, os.path.join(self.dist_path, 'OpenLPPlus.ico'))
+        self._print_verbose('... OpalPresenter.ico')
+        copy(self.icon_path, os.path.join(self.dist_path, 'OpalPresenter.ico'))
         self._print_verbose('... LICENSE.txt')
         copy(self.license_path, os.path.join(self.dist_path, 'LICENSE.txt'))
         self._print_verbose('... service_file.ico')

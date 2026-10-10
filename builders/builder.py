@@ -331,7 +331,7 @@ class Builder(object):
         else:
             self.version = None
         if self.args.release and self.args.can_export:
-            self.work_path = os.path.abspath(os.path.join(self.branch_path, '..', 'OpenLP+-' + self.version))
+            self.work_path = os.path.abspath(os.path.join(self.branch_path, '..', 'Opal Presenter-' + self.version))
         else:
             self.work_path = self.branch_path
         self.openlp_script = os.path.abspath(os.path.join(self.work_path, 'openlp', '__main__.py'))
@@ -405,7 +405,7 @@ class Builder(object):
                '--collect-binaries', 'PySide6.QtWebEngineCore',
                '--collect-data', 'PySide6.QtWebEngineCore',
                '-i', self.icon_path,
-               '-n', 'OpenLP+',
+               '-n', 'Opal Presenter',
                *self.get_extra_parameters(),  # Adds any extra parameters we wish to use
                self.openlp_script
                ]

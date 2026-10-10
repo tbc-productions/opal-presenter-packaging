@@ -1,0 +1,39 @@
+app-id: net.tbcproductions.OpalPresenter
+runtime: org.kde.Platform
+runtime-version: '6.8'
+sdk: org.kde.Sdk
+base: io.qt.PySide.BaseApp
+base-version: '6.8'
+command: opal-presenter
+cleanup-commands:
+  - /app/cleanup-BaseApp.sh
+finish-args:
+  - --socket=x11
+  - --share=ipc
+  - --device=dri
+  - --share=network
+  - --socket=pulseaudio
+  - --env=QTWEBENGINEPROCESS_PATH=/app/bin/QtWebEngineProcess
+  - --filesystem=host
+modules:
+  - python3-requirements.json
+  - name: OpalPresenter
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/share/opal-presenter/i18n
+      - cd resources/i18n; for file in *.ts; do lconvert -i $file -o /app/share/opal-presenter/i18n/${file%%ts}qm
+        ; done; cd ../..
+      - pip install --no-deps --no-build-isolation --prefix=$FLATPAK_DEST .
+      - mkdir -p /app/share/applications && cp resources/openlp.desktop /app/share/applications/net.tbcproductions.OpalPresenter.desktop
+        && sed -ie s/Icon=opal-presenter/Icon=net.tbcproductions.OpalPresenter/ /app/share/applications/net.tbcproductions.OpalPresenter.desktop
+      - mkdir -p /app/share/icons/hicolor/256x256/apps/ && cp resources/images/opal-presenter-logo-256x256.png
+        /app/share/icons/hicolor/256x256/apps/net.tbcproductions.OpalPresenter.png
+      - mkdir -p /app/share/icons/hicolor/scalable/apps/ && cp branding/Opal-Presenter.svg
+        /app/share/icons/hicolor/scalable/apps/net.tbcproductions.OpalPresenter.svg
+      - install -Dm 644 -t /app/share/appdata/ net.tbcproductions.OpalPresenter.appdata.xml
+    sources:
+      - type: git
+        url: https://git.tbcproductions.net/tbcproductions/opal-presenter.git
+        tag: 4.0.4
+      - type: file
+        path: net.tbcproductions.OpalPresenter.appdata.xml

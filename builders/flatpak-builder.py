@@ -50,7 +50,7 @@ For example:
 
 
 If you're running this outside of GitLab, you'll need te generate a private token for yourself, get the project ID of
-the OpenLP+ repository, and run the script the following way:
+the Opal Presenter repository, and run the script the following way:
 
 .. code::
 
@@ -116,24 +116,13 @@ def get_releases(project_id: str, api_token: str, token_type: str) -> list[tuple
     :param api_token: The API token to authenticate this request against the API
     :return: A list of tuples, in the format (tag, date, link-to-tarball)
     """
-    releases = []
-    headers = {}
-    if token_type == 'private':
-        headers['PRIVATE-TOKEN'] = api_token
-    else:
-        headers['JOB-TOKEN'] = api_token
-    response = requests.get(f'https://gitlab.com/api/v4/projects/{project_id}/releases', headers=headers)
-    if response.status_code == 200:
-        for release in response.json():
-            asset_url = ''
-            for asset in release['assets']['sources']:
-                if asset['format'] == 'tar.gz':
-                    asset_url = asset['url']
-                    break
-            releases.append((release['tag_name'], release['released_at'][:10], asset_url))
-    else:
-        print(response.text)
-    return releases
+    headers = {'Authorization': f'token {api_token}'} if api_token else {}
+    response = requests.get('https://git.tbcproductions.net/api/v1/repos/tbcproductions/opal-presenter/releases',
+                            headers=headers, timeout=30)
+    response.raise_for_status()
+    return [(release['tag_name'], release['published_at'][:10],
+             'https://git.tbcproductions.net/tbcproductions/opal-presenter/archive/' + release['tag_name'] + '.tar.gz')
+            for release in response.json() if not release.get('draft') and not release.get('prerelease')]
 
 
 def get_version_url(version: str, releases: list[tuple]) -> str:
@@ -156,7 +145,7 @@ def download_and_get_hash(version_url: str) -> str:
 
 def update_appdata_xml(releases: list[tuple]) -> bool:
     """Update the releases in the appdata XML"""
-    appdata_file = get_base_path().joinpath('flatpak', 'net.tbcproductions.OpenLPPlus.appdata.xml')
+    appdata_file = get_base_path().joinpath('flatpak', 'net.tbcproductions.OpalPresenter.appdata.xml')
     el = objectify.E
     with appdata_file.open('r') as fd:
         xml = objectify.parse(fd)
@@ -175,13 +164,15 @@ def update_appdata_xml(releases: list[tuple]) -> bool:
 def update_build_yml(version: str, version_url: str, sha256_hash: str) -> bool:
     """Build the YAML file needed to build the flatpak"""
     yaml = get_yaml()
-    build_file = get_base_path().joinpath('flatpak', 'net.tbcproductions.OpenLPPlus.yml')
+    build_file = get_base_path().joinpath('flatpak', 'net.tbcproductions.OpalPresenter.yml')
     with build_file.open('r') as fd:
         openlp_yml = yaml.load(fd)
     for module in openlp_yml['modules']:
-        if isinstance(module, dict) and module['name'] == 'OpenLPPlus':
+        if isinstance(module, dict) and module['name'] == 'OpalPresenter':
             for source in module['sources']:
-                if source['type'] == 'archive':
+                if source['type'] == 'git':
+                    source['tag'] = version
+                elif source['type'] == 'archive':
                     source['url'] = version_url
                     source['sha256'] = sha256_hash
     yaml.dump(openlp_yml, build_file)
@@ -200,11 +191,11 @@ def build_flatpak(version: str, bundle: str):
     if result.returncode != 0:
         return False
     result = run(['flatpak-builder', '--user', '--install', '--force-clean', '--repo=repo', 'build',
-                  'net.tbcproductions.OpenLPPlus.yml'], cwd=str(base_path / 'flatpak'))
+                  'net.tbcproductions.OpalPresenter.yml'], cwd=str(base_path / 'flatpak'))
     if result.returncode != 0:
         return False
-    result = run(['flatpak', 'build-bundle', 'repo', f'OpenLPPlus-{version}-{bundle}.flatpak',
-                  'net.tbcproductions.OpenLPPlus'],
+    result = run(['flatpak', 'build-bundle', 'repo', f'OpalPresenter-{version}-{bundle}.flatpak',
+                  'net.tbcproductions.OpalPresenter'],
                  cwd=str(base_path / 'flatpak'))
     if result.returncode != 0:
         return False

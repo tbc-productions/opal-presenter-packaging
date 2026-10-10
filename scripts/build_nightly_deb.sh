@@ -1,6 +1,6 @@
 #!/bin/bash
 ###############################################################################
-# PPA Build Script for OpenLP+                                                #
+# PPA Build Script for Opal Presenter                                                #
 ###############################################################################
 
 RELEASE_NAME=$1
@@ -17,11 +17,11 @@ export DEBEMAIL="raoul@snyman.info"
 
 echo -n "Copying source tarball..."
 cd $UPLOADS_DIR
-if [[ ! -f "$UPLOADS_DIR/OpenLPPlus-${OPENLP_VERSION}.tar.gz" ]]; then
-	echo "$UPLOADS_DIR/OpenLPPlus-${OPENLP_VERSION}.tar.gz NOT FOUND, exiting."
+if [[ ! -f "$UPLOADS_DIR/OpalPresenter-${OPENLP_VERSION}.tar.gz" ]]; then
+	echo "$UPLOADS_DIR/OpalPresenter-${OPENLP_VERSION}.tar.gz NOT FOUND, exiting."
 	exit 1
 fi
-cp $UPLOADS_DIR/OpenLPPlus-${OPENLP_VERSION}.tar.gz $TARGT_TARBALL
+cp $UPLOADS_DIR/OpalPresenter-${OPENLP_VERSION}.tar.gz $TARGT_TARBALL
 echo done.
 echo -n "Backing up changelog..."
 cd $UBUNTU_DIR

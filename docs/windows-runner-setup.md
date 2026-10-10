@@ -1,7 +1,7 @@
 # Windows Gitea Actions Runner Setup
 
 Step-by-step for registering a self-hosted Gitea Actions runner on Windows so
-the `build-windows` job in `openlp-packaging/.gitea/workflows/build.yml` can
+the `build-windows` job in `opal-presenter-packaging/.gitea/workflows/build.yml` can
 pick up work.
 
 > Run every PowerShell block in an **elevated PowerShell** (right-click →
@@ -316,13 +316,13 @@ and the service status should be `Running`.
 
 ## 9. Trigger a test run
 
-1. On Gitea: `<your-org>/openlp-packaging` → *Actions* → *Build OpenLP+* →
+1. On Gitea: `<your-org>/opal-presenter-packaging` → *Actions* → *Build Opal Presenter* →
    *Run workflow* → leave inputs blank → *Run*.
 2. Watch the `build-windows` job. It should go **Queued → Running** as soon
    as the Linux runner finishes `prepare-source`.
 3. Tail `C:\actions-runner\runner.log` to see the job executing locally.
 
-> **Skipping the Windows build.** The `Build OpenLP+` workflow exposes a
+> **Skipping the Windows build.** The `Build Opal Presenter` workflow exposes a
 > `build_windows` input (default `true`). Set it to `false` on a manual
 > run to skip this job — useful if the Windows box is offline for
 > maintenance and you still want a macOS-only build to go through.

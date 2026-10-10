@@ -1,7 +1,7 @@
 # macOS Gitea Actions Runner Setup
 
 Step-by-step for registering a self-hosted Gitea Actions runner on macOS so
-the `build-macos` job in `openlp-packaging/.gitea/workflows/build.yml` can
+the `build-macos` job in `opal-presenter-packaging/.gitea/workflows/build.yml` can
 pick up work.
 
 > All commands are for `zsh` on an Apple Silicon Mac. For Intel Macs, replace
@@ -276,13 +276,13 @@ INFO Runner: mymac-macos, ..., is online and listening
 
 ## 9. Trigger a test run
 
-1. On Gitea: `<your-org>/openlp-packaging` → *Actions* → *Build OpenLP+* →
+1. On Gitea: `<your-org>/opal-presenter-packaging` → *Actions* → *Build Opal Presenter* →
    *Run workflow* → leave inputs blank → *Run*.
 2. Watch the `build-macos` job. It should go **Queued → Running** as soon as
    the Linux runner finishes `prepare-source`.
 3. Tail `~/actions-runner/runner.log` to see the job executing locally.
 
-> **Skipping the macOS build.** The `Build OpenLP+` workflow exposes a
+> **Skipping the macOS build.** The `Build Opal Presenter` workflow exposes a
 > `build_macos` input (default `true`). Set it to `false` on a manual
 > run to skip this job — useful if the Mac is offline for maintenance
 > and you still want a Windows-only build to go through.

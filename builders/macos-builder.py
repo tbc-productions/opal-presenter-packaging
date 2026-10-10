@@ -30,7 +30,7 @@ For this script to work out of the box, it depends on a number of things:
 Python 3.14.4
 
 PySide6
-    You should already have this installed, OpenLP+ doesn't work without it. The
+    You should already have this installed, Opal Presenter doesn't work without it. The
     version the script expects is the packaged one available from River Bank
     Computing.
 
@@ -44,21 +44,21 @@ PyInstaller
 Git
     You need the command line "git" client installed.
 
-OpenLP+
+Opal Presenter
     A checkout of the latest code, in a branch directory, which is in a Bazaar
     shared repository directory. This means your code should be in a directory
     structure like this: "openlp\branch-name".
 
 macos-builder.py
     This script, of course. It should be in the "macos-package" directory
-    at the same level as the OpenLP+ source tree.
+    at the same level as the Opal Presenter source tree.
 
 Mako
     Mako Templates for Python.  This package is required for building the
     remote plugin.
 
 Alembic
-    Required for upgrading the databases used in OpenLP+.
+    Required for upgrading the databases used in Opal Presenter.
 
 config.ini.default
     The configuration file contains settings of the version string to include
@@ -300,9 +300,9 @@ class MacOSBuilder(Builder):
 
     def _copy_bundle_files(self):
         """
-        Copy Info.plist and OpenLP.icns to app bundle.
+        Copy Info.plist and OpalPresenter.icns to app bundle.
         """
-        self._print_verbose('... OpenLP.icns')
+        self._print_verbose('... OpalPresenter.icns')
         try:
             os.makedirs(os.path.join(self.dist_app_path, 'Contents', 'Resources'))
         except FileExistsError:
@@ -393,8 +393,8 @@ class MacOSBuilder(Builder):
         self._print('Creating dmg file...')
         arch = platform.machine()
         ver_slug = self.filename_version_slug()
-        dmg_name = f'OpenLPPlus-{ver_slug}-{arch}.dmg'
-        dmg_title = f'OpenLP+ {ver_slug}'
+        dmg_name = f'OpalPresenter-{ver_slug}-{arch}.dmg'
+        dmg_title = f'Opal Presenter {ver_slug}'
 
         self.dmg_file = os.path.join(self.work_path, 'dist', dmg_name)
         # Remove dmg if it exists.
@@ -433,8 +433,8 @@ class MacOSBuilder(Builder):
         """
         Extra setup to run
         """
-        self.dist_app_path = os.path.join(self.work_path, 'dist', 'OpenLP+.app')
-        self.dist_path = os.path.join(self.work_path, 'dist', 'OpenLP+.app', 'Contents', 'MacOS')
+        self.dist_app_path = os.path.join(self.work_path, 'dist', 'Opal Presenter.app')
+        self.dist_path = os.path.join(self.work_path, 'dist', 'Opal Presenter.app', 'Contents', 'MacOS')
 
     def copy_extra_files(self):
         """

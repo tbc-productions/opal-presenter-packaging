@@ -22,7 +22,7 @@
 """
 This is the settings file for building the DMG. Run dmgbuild like so::
 
-    $ dmgbuild -s dmg-settings.py -D size=<size>,app=<path/to/OpenLP+.app> "OpenLP+" OpenLPPlus-{version}-{arch}.dmg
+    $ dmgbuild -s dmg-settings.py -D size=<size>,app=<path/to/Opal Presenter.app> "Opal Presenter" OpalPresenter-{version}-{arch}.dmg
 """
 import os
 
@@ -30,14 +30,14 @@ HERE = os.getcwd()
 
 format = 'UDBZ'
 size = '850M'
-files = [defines.get('app', '/Applications/OpenLP+.app')]
+files = [defines.get('app', '/Applications/Opal Presenter.app')]
 symlinks = { 'Applications': '/Applications' }
-badge_icon = os.path.join(HERE, 'OpenLP.icns')
+badge_icon = os.path.join(HERE, 'OpalPresenter.icns')
 icon_locations = {
-    'OpenLP+.app': (130, 110),
+    'Opal Presenter.app': (130, 110),
     'Applications': (400, 110)
 }
-background = os.path.join(HERE, 'OpenLP-Background.tiff')
+background = os.path.join(HERE, 'OpalPresenter-Background.tiff')
 window_rect = ((100, 100), (530, 360))
 default_view = 'icon-view'
 show_icon_preview = False

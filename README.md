@@ -1,16 +1,16 @@
-# openlp-packaging
+# opal-presenter-packaging
 
-Packaging and CI for [OpenLP+](https://git.tbcproductions.net/tbcproductions/openlp-plus),
+Packaging and CI for [Opal Presenter](https://git.tbcproductions.net/tbcproductions/opal-presenter),
 a fork of [OpenLP](https://openlp.org/). This repository does not contain
 application source — it produces installable artifacts (macOS `.dmg`,
-Windows `.msi` / portable `.exe`, Linux Flatpak) from the `openlp-plus`
+Windows `.msi` / portable `.exe`, Linux Flatpak) from the `opal-presenter`
 source at a given tag.
 
 Plugins live in a separate repo,
-[openlp-plugins](https://git.tbcproductions.net/tbcproductions/openlp-plugins),
+[opal-presenter-plugins](https://git.tbcproductions.net/tbcproductions/opal-presenter-plugins),
 and are shipped as a source ZIP from their own release workflow. They are
-**not** bundled into OpenLP+ builds; users install plugins manually by
-dropping directories into `openlp/plugins/` inside an OpenLP+ install.
+**not** bundled into Opal Presenter builds; users install plugins manually by
+dropping directories into `openlp/plugins/` inside an Opal Presenter install.
 
 ## Layout
 
@@ -34,18 +34,18 @@ dropping directories into `openlp/plugins/` inside an OpenLP+ install.
 
 The workflow in `.gitea/workflows/build.yml` has two entry points:
 
-1. **Automatic** — when `openlp-plus` pushes a `v*` tag, its `release.yml`
+1. **Automatic** — when `opal-presenter` pushes a `v*` tag, its `release.yml`
    creates a Gitea release and POSTs a `repository_dispatch` event
    (`upstream-release`) to this repo. The dispatch carries the tag, and
    this repo builds from that tag.
-2. **Manual** — *Actions → Build OpenLP+ → Run workflow* in the Gitea
+2. **Manual** — *Actions → Build Opal Presenter → Run workflow* in the Gitea
    UI. All inputs are optional.
 
 ### Workflow inputs
 
 | Input | Default | Effect |
 |---|---|---|
-| `openlp_tag` | *(empty)* | Specific `openlp-plus` tag to build. Empty = latest release. |
+| `opal_tag` | *(empty)* | Specific `opal-presenter` tag to build. Empty = latest release. |
 | `create_release` | `true` | Publish a release on this repo with all artifacts attached. Set `false` to produce artifacts only. |
 | `build_macos` | `true` | Run `build-macos` (requires a runner labelled `macos`). |
 | `build_windows` | `true` | Run `build-windows` (requires a runner labelled `windows`). |
@@ -57,9 +57,9 @@ build from an upstream trigger.
 
 ### Jobs
 
-- `prepare-source` — resolves which `openlp-plus` tag to build (from
+- `prepare-source` — resolves which `opal-presenter` tag to build (from
   the dispatch payload, workflow input, or the latest release API)
-  and exposes it as `plus_tag` / `version` outputs. Runs in
+  and exposes it as `opal_tag` / `version` outputs. Runs in
   `node:20-bookworm-slim`. Each platform build job checks out the
   source tree itself from the resolved tag, so there's no source
   artifact round-trip.
@@ -70,7 +70,7 @@ build from an upstream trigger.
   PyICU wheel), then runs `builders/windows-builder.py` to produce
   `.msi` and portable `.exe`.
 - `publish-release` — downloads every artifact, creates a tagged
-  release on this repo named `OpenLP+ <tag>`, and uploads the
+  release on this repo named `Opal Presenter <tag>`, and uploads the
   artifacts as assets. Skips if `create_release=false`. Runs
   regardless of whether individual build jobs succeeded — ships
   whatever artifacts were produced.
@@ -81,7 +81,7 @@ The pipeline expects a single secret, defined at **org level** so every
 repo can share it:
 
 - `CI_TOKEN` — Gitea personal access token with `repo` scope. Used by
-  `prepare-source` to check out `openlp-plus` at an arbitrary tag, and
+  `prepare-source` to check out `opal-presenter` at an arbitrary tag, and
   by `publish-release` to create releases and upload assets.
 
 ## Runners
@@ -117,7 +117,7 @@ python builders/macos-builder.py \
   --release v3.2.1 \
   --skip-update \
   --config macos/config-gitlab.ini \
-  --branch /path/to/openlp-plus-checkout
+  --branch /path/to/opal-presenter-checkout
 ```
 
 You'll need the same runtime deps the CI job installs

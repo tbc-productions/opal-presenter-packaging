@@ -6,11 +6,11 @@ light = %(progfiles)s\WiX Toolset v3.14\bin\light.exe
 
 [paths]
 branch = %(projects)s\trunk
-icon = %(here)s\windows\OpenLPPlus.ico
+icon = %(here)s\windows\OpalPresenter.ico
 hooks = %(here)s\pyinstaller-hooks
 license = %(here)s\LICENSE.txt
-portable_source = %(here)s\windows\OpenLPPlusPortable
-portable_dest = %(projects)s\OpenLPPlusPortable
+portable_source = %(here)s\windows\OpalPresenterPortable
+portable_dest = %(projects)s\OpalPresenterPortable
 
 [transifex]
 username =

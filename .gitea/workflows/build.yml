@@ -1,4 +1,4 @@
-name: Build OpenLP+
+name: Build Opal Presenter
 
 on:
   repository_dispatch:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       openlp_tag:
-        description: "openlp-plus tag to build (blank = latest release)"
+        description: "opal-presenter tag to build (blank = latest release)"
         required: false
         default: ""
       create_release:
@@ -27,7 +27,7 @@ on:
         default: "false"
 
 env:
-  PLUS_REPO: tbcproductions/openlp-plus
+  OPAL_REPO: tbcproductions/opal-presenter
 
 defaults:
   run:
@@ -35,12 +35,12 @@ defaults:
 
 jobs:
   prepare-source:
-    name: Resolve openlp-plus tag
+    name: Resolve opal-presenter tag
     runs-on: ubuntu-latest
     container:
       image: node:20-bookworm-slim
     outputs:
-      plus_tag: ${{ steps.resolve.outputs.plus_tag }}
+      opal_tag: ${{ steps.resolve.outputs.opal_tag }}
       version: ${{ steps.resolve.outputs.version }}
       release_tag: ${{ steps.release.outputs.release_tag }}
       release_id: ${{ steps.release.outputs.release_id }}
@@ -75,32 +75,32 @@ jobs:
           CI_TOKEN: ${{ secrets.CI_TOKEN }}
         run: |
           set -euo pipefail
-          PLUS_TAG="${{ github.event.client_payload.tag || github.event.inputs.openlp_tag || '' }}"
-          if [ -z "$PLUS_TAG" ]; then
-            echo "No tag supplied, asking ${PLUS_REPO} for its latest release"
+          OPAL_TAG="${{ github.event.client_payload.tag || github.event.inputs.openlp_tag || '' }}"
+          if [ -z "$OPAL_TAG" ]; then
+            echo "No tag supplied, asking ${OPAL_REPO} for its latest release"
             HTTP=$(curl -sS -o /tmp/latest.json -w '%{http_code}' \
               -H "Authorization: token ${CI_TOKEN}" \
-              "${GITHUB_SERVER_URL}/api/v1/repos/${PLUS_REPO}/releases/latest")
+              "${GITHUB_SERVER_URL}/api/v1/repos/${OPAL_REPO}/releases/latest")
             if [ "$HTTP" != "200" ]; then
-              echo "::error::Could not query ${PLUS_REPO}/releases/latest (HTTP $HTTP)"
+              echo "::error::Could not query ${OPAL_REPO}/releases/latest (HTTP $HTTP)"
               cat /tmp/latest.json || true
               exit 1
             fi
-            PLUS_TAG="$(jq -r '.tag_name // empty' /tmp/latest.json)"
+            OPAL_TAG="$(jq -r '.tag_name // empty' /tmp/latest.json)"
           fi
-          if [ -z "$PLUS_TAG" ] || [ "$PLUS_TAG" = "null" ]; then
-            echo "::error::Failed to resolve an openlp-plus tag. Re-run the workflow with a non-empty 'openlp_tag' input, or publish a release on ${PLUS_REPO}."
+          if [ -z "$OPAL_TAG" ] || [ "$OPAL_TAG" = "null" ]; then
+            echo "::error::Failed to resolve an opal-presenter tag. Re-run the workflow with a non-empty 'openlp_tag' input, or publish a release on ${OPAL_REPO}."
             exit 1
           fi
-          echo "Resolved openlp-plus tag: $PLUS_TAG"
-          echo "plus_tag=$PLUS_TAG"    | tee -a "$GITHUB_OUTPUT"
-          echo "version=${PLUS_TAG#v}" | tee -a "$GITHUB_OUTPUT"
+          echo "Resolved opal-presenter tag: $OPAL_TAG"
+          echo "opal_tag=$OPAL_TAG"    | tee -a "$GITHUB_OUTPUT"
+          echo "version=${OPAL_TAG#v}" | tee -a "$GITHUB_OUTPUT"
 
       - name: Resolve or create release
         id: release
         env:
           CI_TOKEN: ${{ secrets.CI_TOKEN }}
-          PLUS_TAG: ${{ steps.resolve.outputs.plus_tag }}
+          OPAL_TAG: ${{ steps.resolve.outputs.opal_tag }}
           RELEASE_REPO: ${{ steps.target.outputs.release_repo }}
         run: |
           set -e
@@ -113,29 +113,29 @@ jobs:
 
           HTTP=$(curl -sS -o /tmp/release.json -w '%{http_code}' \
             -H "Authorization: token ${CI_TOKEN}" \
-            "${GITHUB_SERVER_URL}/api/v1/repos/${RELEASE_REPO}/releases/tags/${PLUS_TAG}")
+            "${GITHUB_SERVER_URL}/api/v1/repos/${RELEASE_REPO}/releases/tags/${OPAL_TAG}")
 
           if [ "$HTTP" = "200" ]; then
             RELEASE_ID=$(jq -r .id /tmp/release.json)
-            echo "Reusing existing release $RELEASE_ID at tag ${PLUS_TAG}"
-            echo "release_tag=${PLUS_TAG}"     | tee -a "$GITHUB_OUTPUT"
+            echo "Reusing existing release $RELEASE_ID at tag ${OPAL_TAG}"
+            echo "release_tag=${OPAL_TAG}"     | tee -a "$GITHUB_OUTPUT"
             echo "release_id=$RELEASE_ID"      | tee -a "$GITHUB_OUTPUT"
             echo "release_existed=true"        | tee -a "$GITHUB_OUTPUT"
             exit 0
           fi
 
           if [ "$HTTP" != "404" ]; then
-            echo "::error::Unexpected HTTP $HTTP looking up release at tag ${PLUS_TAG}"
+            echo "::error::Unexpected HTTP $HTTP looking up release at tag ${OPAL_TAG}"
             cat /tmp/release.json || true
             exit 1
           fi
 
-          echo "No existing release for tag ${PLUS_TAG}, creating draft"
-          NAME="OpenLP+ ${PLUS_TAG}"
+          echo "No existing release for tag ${OPAL_TAG}, creating draft"
+          NAME="Opal Presenter ${OPAL_TAG}"
           BODY=$(jq -n \
-            --arg tag "$PLUS_TAG" \
+            --arg tag "$OPAL_TAG" \
             --arg name "$NAME" \
-            --arg body "Built from openlp-plus @ ${PLUS_TAG}." \
+            --arg body "Built from opal-presenter @ ${OPAL_TAG}." \
             '{tag_name:$tag, name:$name, body:$body, draft:true, prerelease:false}')
 
           RELEASE_ID=$(curl -fsSL -X POST \
@@ -144,7 +144,7 @@ jobs:
             -d "$BODY" \
             "${GITHUB_SERVER_URL}/api/v1/repos/${RELEASE_REPO}/releases" | jq -r .id)
 
-          echo "release_tag=${PLUS_TAG}" | tee -a "$GITHUB_OUTPUT"
+          echo "release_tag=${OPAL_TAG}" | tee -a "$GITHUB_OUTPUT"
           echo "release_id=$RELEASE_ID"  | tee -a "$GITHUB_OUTPUT"
           echo "release_existed=false"   | tee -a "$GITHUB_OUTPUT"
 
@@ -160,11 +160,11 @@ jobs:
       - name: Check out packaging repo
         uses: actions/checkout@v4
 
-      - name: Check out openlp-plus at tag
+      - name: Check out opal-presenter at tag
         uses: actions/checkout@v4
         with:
-          repository: ${{ env.PLUS_REPO }}
-          ref: ${{ needs.prepare-source.outputs.plus_tag }}
+          repository: ${{ env.OPAL_REPO }}
+          ref: ${{ needs.prepare-source.outputs.opal_tag }}
           path: source
           token: ${{ secrets.CI_TOKEN }}
           fetch-depth: 0
@@ -197,7 +197,7 @@ jobs:
             bash .gitea/scripts/upload-release-asset.sh "$asset"
           done
           if [ "$found" = "0" ]; then
-            echo "::warning::No Flatpak assets found in flatpak/"
+            echo "::error::No Flatpak assets found in flatpak/"; exit 1
           fi
 
   build-macos:
@@ -209,11 +209,11 @@ jobs:
       - name: Check out packaging repo
         uses: actions/checkout@v4
 
-      - name: Check out openlp-plus at tag
+      - name: Check out opal-presenter at tag
         uses: actions/checkout@v4
         with:
-          repository: ${{ env.PLUS_REPO }}
-          ref: ${{ needs.prepare-source.outputs.plus_tag }}
+          repository: ${{ env.OPAL_REPO }}
+          ref: ${{ needs.prepare-source.outputs.opal_tag }}
           path: source
           token: ${{ secrets.CI_TOKEN }}
           fetch-depth: 0
@@ -246,7 +246,7 @@ jobs:
         run: |
           export PATH="$(pwd)/.venv/bin:/opt/homebrew/opt/python@3.14/bin:/opt/homebrew/opt/icu4c/bin:/opt/homebrew/opt/icu4c/sbin:$PATH"
           .venv/bin/python -u builders/macos-builder.py \
-            --release "${{ needs.prepare-source.outputs.plus_tag }}" \
+            --release "${{ needs.prepare-source.outputs.opal_tag }}" \
             --skip-update \
             --config macos/config-gitlab.ini \
             --branch "$(pwd)/source"
@@ -268,7 +268,7 @@ jobs:
             bash .gitea/scripts/upload-release-asset.sh "$asset"
           done
           if [ "$found" = "0" ]; then
-            echo "::warning::No macOS assets found in source/dist/"
+            echo "::error::No macOS assets found in source/dist/"; exit 1
           fi
 
   build-windows:
@@ -282,11 +282,11 @@ jobs:
       - name: Check out packaging repo
         uses: actions/checkout@v4
 
-      - name: Check out openlp-plus at tag
+      - name: Check out opal-presenter at tag
         uses: actions/checkout@v4
         with:
-          repository: ${{ env.PLUS_REPO }}
-          ref: ${{ needs.prepare-source.outputs.plus_tag }}
+          repository: ${{ env.OPAL_REPO }}
+          ref: ${{ needs.prepare-source.outputs.opal_tag }}
           path: source
           token: ${{ secrets.CI_TOKEN }}
           fetch-depth: 0
@@ -332,7 +332,7 @@ jobs:
           PYTHONUNBUFFERED: "1"
         run: |
           python -u builders/windows-builder.py `
-            --release "${{ needs.prepare-source.outputs.plus_tag }}" `
+            --release "${{ needs.prepare-source.outputs.opal_tag }}" `
             --skip-update `
             --config windows/config-gitea.ini `
             --branch "$(Get-Location)/source" `
@@ -351,8 +351,8 @@ jobs:
           $assets = @(Get-ChildItem -Path source/dist -Filter *.msi -ErrorAction SilentlyContinue) +
                     @(Get-ChildItem -Path source/dist -Filter *.exe -ErrorAction SilentlyContinue)
           if ($assets.Count -eq 0) {
-            Write-Host "::warning::No Windows assets found in source/dist/"
-            exit 0
+            Write-Host "::error::No Windows assets found in source/dist/"
+            exit 1
           }
           $base = "$env:GITHUB_SERVER_URL/api/v1/repos/$env:RELEASE_REPO/releases/$env:RELEASE_ID/assets"
           $authHeader = "Authorization: token $env:CI_TOKEN"
@@ -393,8 +393,8 @@ jobs:
           }
 
   publish-release:
-    name: Publish openlp-packaging release
-    needs: [prepare-source, build-macos, build-windows]
+    name: Publish opal-presenter-packaging release
+    needs: [prepare-source, build-macos, build-windows, build-flatpak]
     if: >-
       always()
       && needs.prepare-source.result == 'success'
@@ -410,32 +410,38 @@ jobs:
           apt-get install -y --no-install-recommends \
             curl jq ca-certificates
 
-      - name: Finalise or discard draft release
+      - name: Publish completed draft release
         env:
           CI_TOKEN: ${{ secrets.CI_TOKEN }}
           RELEASE_ID: ${{ needs.prepare-source.outputs.release_id }}
           RELEASE_REPO: ${{ needs.prepare-source.outputs.release_repo }}
-          RELEASE_EXISTED: ${{ needs.prepare-source.outputs.release_existed }}
           MACOS_RESULT: ${{ needs.build-macos.result }}
           WINDOWS_RESULT: ${{ needs.build-windows.result }}
+          FLATPAK_RESULT: ${{ needs.build-flatpak.result }}
         run: |
           set -e
           ANY_SUCCESS=0
-          for r in "$MACOS_RESULT" "$WINDOWS_RESULT"; do
+          for r in "$MACOS_RESULT" "$WINDOWS_RESULT" "$FLATPAK_RESULT"; do
+            if [ "$r" != "success" ] && [ "$r" != "skipped" ]; then
+              echo "::error::A requested build failed; retaining the draft release for inspection"
+              exit 1
+            fi
             [ "$r" = "success" ] && ANY_SUCCESS=1
           done
 
-          if [ "$RELEASE_EXISTED" = "true" ]; then
-            echo "Release $RELEASE_ID already existed; leaving it untouched"
+          if [ "$ANY_SUCCESS" = "0" ]; then
+            echo "::warning::No builds succeeded; retaining the draft release"
+            exit 1
+          fi
+          IS_DRAFT=$(curl -fsSL -H "Authorization: token ${CI_TOKEN}" \
+            "${GITHUB_SERVER_URL}/api/v1/repos/${RELEASE_REPO}/releases/${RELEASE_ID}" | jq -r .draft)
+          if [ "$IS_DRAFT" = "false" ]; then
+            echo "Release $RELEASE_ID is already published; leaving it untouched"
             exit 0
           fi
-
-          if [ "$ANY_SUCCESS" = "0" ]; then
-            echo "::warning::No builds succeeded - deleting draft release $RELEASE_ID"
-            curl -fsSL -X DELETE \
-              -H "Authorization: token ${CI_TOKEN}" \
-              "${GITHUB_SERVER_URL}/api/v1/repos/${RELEASE_REPO}/releases/${RELEASE_ID}"
-            exit 0
+          if [ "$IS_DRAFT" != "true" ]; then
+            echo "::error::Could not confirm the release is a draft"
+            exit 1
           fi
 
           echo "Publishing draft release $RELEASE_ID"

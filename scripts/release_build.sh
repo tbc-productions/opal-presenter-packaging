@@ -2,11 +2,11 @@
 
 VERSION=$1
 RELEASE=release-$VERSION
-FILENAME=OpenLPPlus-$VERSION.tar.gz
+FILENAME=OpalPresenter-$VERSION.tar.gz
 #TSDIR=$RELEASE/resources/i18n
 #QMDIR=$RELEASE/openlp/i18n
 
-echo Starting the OpenLP+ 2.0 Release Build Script
+echo Starting the Opal Presenter 2.0 Release Build Script
 echo --------------------------------------------
 echo -ne "Updating trunk-2.0...\r"
 cd /home/openlp/Projects/OpenLP/trunk-2.0
@@ -31,4 +31,4 @@ cd /home/openlp/Projects/OpenLP
 rm -fR $RELEASE
 echo "done."
 echo --------------------------------------------
-echo Finished OpenLP+ 2.0 Release Build Script
+echo Finished Opal Presenter 2.0 Release Build Script
