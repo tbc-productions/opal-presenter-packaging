@@ -28,8 +28,8 @@ modules:
         && sed -ie s/Icon=opal-presenter/Icon=net.tbcproductions.OpalPresenter/ /app/share/applications/net.tbcproductions.OpalPresenter.desktop
       - mkdir -p /app/share/icons/hicolor/256x256/apps/ && cp resources/images/opal-presenter-logo-256x256.png
         /app/share/icons/hicolor/256x256/apps/net.tbcproductions.OpalPresenter.png
-      - mkdir -p /app/share/icons/hicolor/scalable/apps/ && cp branding/Opal-Presenter.svg
-        /app/share/icons/hicolor/scalable/apps/net.tbcproductions.OpalPresenter.svg
+      - mkdir -p /app/share/icons/hicolor/1024x1024/apps/ && cp resources/images/opal-presenter-logo-1024x1024.png
+        /app/share/icons/hicolor/1024x1024/apps/net.tbcproductions.OpalPresenter.png
       - install -Dm 644 -t /app/share/appdata/ net.tbcproductions.OpalPresenter.appdata.xml
     sources:
       - type: git
