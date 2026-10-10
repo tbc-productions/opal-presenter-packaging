@@ -62,6 +62,7 @@ This generates a flatpak in the "flatpak" directory.
 import os
 import sys
 from argparse import ArgumentParser, Namespace
+from datetime import date
 from hashlib import sha256
 from pathlib import Path
 from subprocess import run
@@ -80,6 +81,7 @@ def parse_args() -> Namespace:
     """Parse the command line arguments"""
     parser = ArgumentParser()
     parser.add_argument('version', help='The version to build a Flatpak for')
+    parser.add_argument('--branch', type=Path, help='Use an existing source checkout instead of downloading a release')
     parser.add_argument('--project', '-p', help='The project ID from GitLab')
     parser.add_argument('--token', '-t', help='The GitLab API token for authentication')
     parser.add_argument('--token-type', default='ci', help='The type of token, "ci" or "private", defaults to "ci"')
@@ -161,7 +163,7 @@ def update_appdata_xml(releases: list[tuple]) -> bool:
     return True
 
 
-def update_build_yml(version: str, version_url: str, sha256_hash: str) -> bool:
+def update_build_yml(version: str, version_url: str, sha256_hash: str, source_path: Path | None = None) -> bool:
     """Build the YAML file needed to build the flatpak"""
     yaml = get_yaml()
     build_file = get_base_path().joinpath('flatpak', 'net.tbcproductions.OpalPresenter.yml')
@@ -170,7 +172,10 @@ def update_build_yml(version: str, version_url: str, sha256_hash: str) -> bool:
     for module in openlp_yml['modules']:
         if isinstance(module, dict) and module['name'] == 'OpalPresenter':
             for source in module['sources']:
-                if source['type'] == 'git':
+                if source_path is not None and source['type'] in ('git', 'archive', 'dir'):
+                    source.clear()
+                    source.update(type='dir', path=str(source_path.resolve()))
+                elif source['type'] == 'git':
                     source['tag'] = version
                 elif source['type'] == 'archive':
                     source['url'] = version_url
@@ -199,28 +204,36 @@ def build_flatpak(version: str, bundle: str):
                  cwd=str(base_path / 'flatpak'))
     if result.returncode != 0:
         return False
+    return True
 
 
 def main() -> int:
     """The main entrypoint for the script"""
     args = parse_args()
     use_environment(args)
-    releases = get_releases(args.project, args.token, args.token_type)
-    if not releases:
-        print(f'No releases found for project "{args.project}", aborting...')
-        return 1
-    version_url = get_version_url(args.version, releases)
-    if not version_url:
-        print(f'No URL found for version "{args.version}", aborting...')
-        return 2
-    sha256_hash = download_and_get_hash(version_url)
-    if not sha256_hash:
-        print(f'Unable to download "{version_url}" to generate hash, aborting...')
-        return 3
+    if args.branch:
+        if not (args.branch / 'openlp').is_dir() or not (args.branch / 'pyproject.toml').is_file():
+            print(f'Invalid source checkout: {args.branch}')
+            return 2
+        releases = [(args.version, date.today().isoformat(), '')]
+        version_url, sha256_hash = '', ''
+    else:
+        releases = get_releases(args.project, args.token, args.token_type)
+        if not releases:
+            print(f'No releases found for project "{args.project}", aborting...')
+            return 1
+        version_url = get_version_url(args.version, releases)
+        if not version_url:
+            print(f'No URL found for version "{args.version}", aborting...')
+            return 2
+        sha256_hash = download_and_get_hash(version_url)
+        if not sha256_hash:
+            print(f'Unable to download "{version_url}" to generate hash, aborting...')
+            return 3
     if not update_appdata_xml(releases):
         print('Unable to update the appdata XML file, aborting...')
         return 4
-    if not update_build_yml(args.version, version_url, sha256_hash):
+    if not update_build_yml(args.version, version_url, sha256_hash, args.branch):
         print('Unable to build YAML file, aborting...')
         return 5
     if not build_flatpak(args.version, args.bundle):
