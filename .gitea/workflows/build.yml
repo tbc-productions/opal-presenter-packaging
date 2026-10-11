@@ -5,8 +5,12 @@ on:
     types: [upstream-release]
   workflow_dispatch:
     inputs:
-      openlp_tag:
+      opal_tag:
         description: "opal-presenter tag to build (blank = latest release)"
+        required: false
+        default: ""
+      openlp_tag:
+        description: "Legacy tag input; use opal_tag for new dispatches"
         required: false
         default: ""
       create_release:
@@ -73,9 +77,9 @@ jobs:
         shell: bash
         env:
           CI_TOKEN: ${{ secrets.CI_TOKEN }}
+          OPAL_TAG: ${{ github.event.client_payload.tag || github.event.inputs.opal_tag || github.event.inputs.openlp_tag || '' }}
         run: |
           set -euo pipefail
-          OPAL_TAG="${{ github.event.client_payload.tag || github.event.inputs.openlp_tag || '' }}"
           if [ -z "$OPAL_TAG" ]; then
             echo "No tag supplied, asking ${OPAL_REPO} for its latest release"
             HTTP=$(curl -sS -o /tmp/latest.json -w '%{http_code}' \
@@ -89,7 +93,7 @@ jobs:
             OPAL_TAG="$(jq -r '.tag_name // empty' /tmp/latest.json)"
           fi
           if [ -z "$OPAL_TAG" ] || [ "$OPAL_TAG" = "null" ]; then
-            echo "::error::Failed to resolve an opal-presenter tag. Re-run the workflow with a non-empty 'openlp_tag' input, or publish a release on ${OPAL_REPO}."
+            echo "::error::Failed to resolve an opal-presenter tag. Re-run the workflow with a non-empty 'opal_tag' input, or publish a release on ${OPAL_REPO}."
             exit 1
           fi
           echo "Resolved opal-presenter tag: $OPAL_TAG"
@@ -152,7 +156,8 @@ jobs:
     name: Build Flatpak (Linux)
     needs: prepare-source
     if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.build_flatpak == 'true') || (github.event_name == 'repository_dispatch' && github.event.client_payload.build_flatpak == true) }}
-    runs-on: flatpak-builder
+    # Let an online runner mark disabled builds skipped.
+    runs-on: ${{ ((github.event_name == 'workflow_dispatch' && github.event.inputs.build_flatpak == 'true') || (github.event_name == 'repository_dispatch' && github.event.client_payload.build_flatpak == true)) && 'flatpak-builder' || 'ubuntu-latest' }}
     container:
       image: bilelmoussaoui/flatpak-github-actions:gnome-46
       options: --privileged
@@ -204,7 +209,8 @@ jobs:
     name: Build macOS (.dmg)
     needs: prepare-source
     if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.build_macos != 'false') || (github.event_name == 'repository_dispatch' && github.event.client_payload.build_macos != false) }}
-    runs-on: macos
+    # Let an online runner mark disabled builds skipped.
+    runs-on: ${{ ((github.event_name == 'workflow_dispatch' && github.event.inputs.build_macos != 'false') || (github.event_name == 'repository_dispatch' && github.event.client_payload.build_macos != false)) && 'macos' || 'ubuntu-latest' }}
     steps:
       - name: Check out packaging repo
         uses: actions/checkout@v4
@@ -277,7 +283,8 @@ jobs:
       PYTHONUTF8: '1'
     needs: prepare-source
     if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.build_windows != 'false') || (github.event_name == 'repository_dispatch' && github.event.client_payload.build_windows != false) }}
-    runs-on: windows
+    # Let an online runner mark disabled builds skipped.
+    runs-on: ${{ ((github.event_name == 'workflow_dispatch' && github.event.inputs.build_windows != 'false') || (github.event_name == 'repository_dispatch' && github.event.client_payload.build_windows != false)) && 'windows' || 'ubuntu-latest' }}
     steps:
       - name: Check out packaging repo
         uses: actions/checkout@v4
