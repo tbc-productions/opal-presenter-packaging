@@ -51,6 +51,20 @@ def test_manifest_uses_authenticated_checkout(builder, monkeypatch, tmp_path):
     assert sources == [{'type': 'dir', 'path': str(source)}, {'type': 'file', 'path': 'metadata.xml'}]
 
 
+def test_public_releases_do_not_receive_private_credentials(builder, monkeypatch):
+    response = Mock()
+    response.json.return_value = [
+        {'tag_name': '4.0.4', 'published_at': '2026-10-11T10:00:00Z', 'draft': False, 'prerelease': False},
+        {'tag_name': '4.0.4a2', 'published_at': '2026-10-11T10:00:00Z', 'draft': False, 'prerelease': True},
+    ]
+    get = Mock(return_value=response)
+    monkeypatch.setattr(builder.requests, 'get', get)
+    assert builder.get_releases('unused', 'private-token', 'unused') == [
+        ('4.0.4', '2026-10-11', 'https://github.com/tchris3/opal-presenter/archive/refs/tags/4.0.4.tar.gz')]
+    get.assert_called_once_with('https://api.github.com/repos/tchris3/opal-presenter/releases', timeout=30)
+    response.raise_for_status.assert_called_once()
+
+
 @pytest.mark.parametrize('codes,success', [([0, 0, 0], True), ([1], False), ([0, 1], False), ([0, 0, 1], False)])
 def test_successful_bundle_returns_true(builder, monkeypatch, tmp_path, codes, success):
     (tmp_path / 'flatpak').mkdir()

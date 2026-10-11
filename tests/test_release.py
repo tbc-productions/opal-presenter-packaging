@@ -6,6 +6,18 @@ from pathlib import Path
 import pytest
 
 
+@pytest.mark.parametrize('tag,expected', [
+    ('4.0.4a2', 'true'), ('v4.0.4b1', 'true'), ('4.0.4rc1', 'true'),
+    ('4.0.4.dev1', 'true'), ('4.0.4', 'false'), ('v4.0.4', 'false'),
+])
+def test_release_channel(tag, expected):
+    workflow = (Path(__file__).parents[1] / '.gitea/workflows/build.yml').read_text()
+    script = workflow.split('          PRERELEASE=false', 1)[1].split('          BODY=', 1)[0]
+    result = subprocess.run(['bash', '-c', 'PRERELEASE=false\n' + script + '\necho "$PRERELEASE"'],
+                            env={**os.environ, 'OPAL_TAG': tag}, capture_output=True, text=True, check=True)
+    assert result.stdout.strip() == expected
+
+
 @pytest.mark.parametrize('results,draft,published,success', [
     (('success', 'success', 'success'), 'true', True, True),
     (('success', 'failure', 'success'), 'true', False, False),

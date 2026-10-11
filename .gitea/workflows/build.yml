@@ -22,7 +22,7 @@ on:
         required: false
         default: "true"
       build_windows:
-        description: "Build the Windows .msi / portable (requires a runner labelled windows)"
+        description: "Build the Windows .msi (requires a runner labelled windows)"
         required: false
         default: "true"
       build_flatpak:
@@ -136,11 +136,16 @@ jobs:
 
           echo "No existing release for tag ${OPAL_TAG}, creating draft"
           NAME="Opal Presenter ${OPAL_TAG}"
+          PRERELEASE=false
+          case "$OPAL_TAG" in
+            *a[0-9]*|*b[0-9]*|*rc[0-9]*|*.dev*) PRERELEASE=true ;;
+          esac
           BODY=$(jq -n \
             --arg tag "$OPAL_TAG" \
             --arg name "$NAME" \
+            --argjson prerelease "$PRERELEASE" \
             --arg body "Built from opal-presenter @ ${OPAL_TAG}." \
-            '{tag_name:$tag, name:$name, body:$body, draft:true, prerelease:false}')
+            '{tag_name:$tag, name:$name, body:$body, draft:true, prerelease:$prerelease}')
 
           RELEASE_ID=$(curl -fsSL -X POST \
             -H "Authorization: token ${CI_TOKEN}" \
@@ -278,7 +283,7 @@ jobs:
           fi
 
   build-windows:
-    name: Build Windows (.msi / portable)
+    name: Build Windows (.msi)
     env:
       PYTHONUTF8: '1'
     needs: prepare-source
@@ -342,8 +347,7 @@ jobs:
             --release "${{ needs.prepare-source.outputs.opal_tag }}" `
             --skip-update `
             --config windows/config-gitea.ini `
-            --branch "$(Get-Location)/source" `
-            --portable
+            --branch "$(Get-Location)/source"
 
       - name: Upload Windows assets to release
         if: ${{ needs.prepare-source.outputs.create_release == 'true' && needs.prepare-source.outputs.release_id != '' }}

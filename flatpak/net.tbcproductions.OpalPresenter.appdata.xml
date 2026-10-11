@@ -22,8 +22,8 @@
     <category>Music</category>
   </categories>
   <content_rating type="oars-1.1"/>
-  <url type="homepage">https://git.tbcproductions.net/tbcproductions/opal-presenter</url>
-  <url type="bugtracker">https://git.tbcproductions.net/tbcproductions/opal-presenter/issues</url>
+  <url type="homepage">https://github.com/tchris3/opal-presenter</url>
+  <url type="bugtracker">https://github.com/tchris3/opal-presenter/issues</url>
   <url type="donation">https://openlp.org/contribute</url>
   <releases>
     <release version="4.0.4" date="2026-10-10"/>

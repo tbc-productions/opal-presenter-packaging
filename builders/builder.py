@@ -203,14 +203,14 @@ class Builder(object):
 
     def filename_version_slug(self) -> str:
         """
-        Short release label for archive filenames (no leading *v*, PEP 440 base only).
+        Release label for archive filenames, retaining prereleases without a leading *v* or local build suffix.
         """
         raw = (self.version or '').strip()
         if len(raw) > 1 and raw[0].lower() == 'v' and (raw[1].isdigit() or raw[1] == '.'):
             raw = raw[1:].strip()
         pep440 = self.parse_pep440_version(raw)
         if pep440 is not None:
-            return str(pep440.base_version)
+            return pep440.public
         base = raw.split('+')[0].strip()
         return base if base else '0.0.0'
 
@@ -615,7 +615,7 @@ class Builder(object):
         """
         The main function to run the builder.
         """
-        self._print_verbose('OpenLP main script: ......%s', self.opal_script)
+        self._print_verbose('Opal main script: ........%s', self.opal_script)
         self._print_verbose('Script path: .............%s', self.script_path)
         self._print_verbose('Branch path: .............%s', self.branch_path)
         self._print_verbose('')

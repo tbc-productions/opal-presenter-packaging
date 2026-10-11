@@ -133,7 +133,9 @@ class WindowsBuilder(Builder):
                     build_number = 3000 + pep440.pre[1]
             else:
                 build_number = 5000
-            return f'{pep440.base_version}.{build_number}'
+            base_version = pep440.base_version
+            base_version += '.0' * (2 - base_version.count('.'))
+            return f'{base_version}.{build_number}'
         else:
             return '0.0.0.0'
 

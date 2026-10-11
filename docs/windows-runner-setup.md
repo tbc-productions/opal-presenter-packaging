@@ -23,14 +23,11 @@ Install these on the Windows machine:
   for MSI creation)
 - **Visual C++ Build Tools** — for any native Python wheels that might compile:
   `winget install Microsoft.VisualStudio.2022.BuildTools`
-- **PortableApps.com Launcher** and **PortableApps.com Installer** — required
-  when the workflow passes `--portable` (it does by default). Download and run
-  the installers from <https://portableapps.com/apps/development>; accept the
-  default install location so they land in
-  `C:\PortableApps\PortableApps.comLauncher\` and
-  `C:\PortableApps\PortableApps.comInstaller\` — which is what
-  `windows/config-gitea.ini` expects. If you install elsewhere, edit that
-  config's `[executables]` section to match.
+
+
+CI builds the Windows MSI. PortableApps packaging remains available through
+`windows-builder.py --portable` on an interactive desktop with the Launcher
+and Installer installed; CI does not run those desktop tools.
 
 If you don't have Chocolatey:
 

@@ -112,18 +112,18 @@ def use_environment(args: Namespace):
 
 
 def get_releases(project_id: str, api_token: str, token_type: str) -> list[tuple[str, str, str]]:
-    """Get the list of releases and their dates from GitLab
+    """Get public Opal releases and their dates from GitHub
 
-    :param project_id: The GitLab project ID
-    :param api_token: The API token to authenticate this request against the API
+    The legacy authentication arguments are retained for callers but are not
+    sent to the public API.
+
     :return: A list of tuples, in the format (tag, date, link-to-tarball)
     """
-    headers = {'Authorization': f'token {api_token}'} if api_token else {}
-    response = requests.get('https://git.tbcproductions.net/api/v1/repos/tbcproductions/opal-presenter/releases',
-                            headers=headers, timeout=30)
+    response = requests.get('https://api.github.com/repos/tchris3/opal-presenter/releases',
+                            timeout=30)
     response.raise_for_status()
     return [(release['tag_name'], release['published_at'][:10],
-             'https://git.tbcproductions.net/tbcproductions/opal-presenter/archive/' + release['tag_name'] + '.tar.gz')
+             'https://github.com/tchris3/opal-presenter/archive/refs/tags/' + release['tag_name'] + '.tar.gz')
             for release in response.json() if not release.get('draft') and not release.get('prerelease')]
 
 
