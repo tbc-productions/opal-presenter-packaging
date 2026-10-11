@@ -4,7 +4,7 @@
   <launchable type="desktop-id">net.tbcproductions.OpalPresenter.desktop</launchable>
   <metadata_license>CC0-1.0</metadata_license>
   <name>Opal Presenter</name>
-  <summary>Opal Presenter - Church presentation software</summary>
+  <summary>Church presentation software</summary>
   <description>
     <p>
       Opal Presenter is a free and open source cross-platform presentation tool
@@ -24,17 +24,12 @@
   <content_rating type="oars-1.1"/>
   <url type="homepage">https://github.com/tbc-productions/opal-presenter</url>
   <url type="bugtracker">https://github.com/tbc-productions/opal-presenter/issues</url>
-  <url type="donation">https://openlp.org/contribute</url>
   <releases>
     <release version="4.0.4" date="2026-10-10"/>
   </releases>
   <project_group>Opal Presenter</project_group>
-  <project_license>GPL-3.0+</project_license>
-  <developer_name>Opal Presenter Contributors</developer_name>
-  <update_contact/>
-  <screenshots>
-    <screenshot type="default">
-      <image type="source">https://openlp.org/screenshots/mainwindow.png</image>
-    </screenshot>
-  </screenshots>
+  <project_license>GPL-3.0-or-later</project_license>
+  <developer id="net.tbcproductions">
+    <name>Opal Presenter Contributors</name>
+  </developer>
 </component>
