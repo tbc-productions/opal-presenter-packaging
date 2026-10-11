@@ -229,6 +229,19 @@ def build_flatpak(version: str, bundle: str, source_path: Path | None = None):
                  cwd=str(base_path / 'flatpak'), env=env)
     if result.returncode != 0:
         return False
+    result = run(['flatpak-builder', '--user', '--force-clean', '--stop-at=OpalPresenter', 'build',
+                  'net.tbcproductions.OpalPresenter.yml'], cwd=str(base_path / 'flatpak'))
+    if result.returncode != 0:
+        return False
+    # Check the Platform, since SDK-only libraries can hide broken runtime dependencies.
+    result = run(['flatpak', 'build', '--runtime', '--env=QT_QPA_PLATFORM=offscreen', 'build', 'python3', '-c',
+                  'from PySide6 import QtCore, QtGui, QtMultimedia, QtMultimediaWidgets, QtNetwork, QtPdf, '
+                  'QtPrintSupport, QtSvg, QtWebChannel, QtWebEngineCore, QtWebEngineWidgets, QtWidgets; '
+                  'import icu, lxml.etree, imagecodecs; from PIL import Image; '
+                  'assert QtCore.qVersion() == "6.11.1"; app = QtWidgets.QApplication([]); '
+                  'print("Flatpak runtime dependencies and Qt 6.11.1 passed")'], cwd=str(base_path / 'flatpak'))
+    if result.returncode != 0:
+        return False
     result = run(['flatpak-builder', '--user', '--install', '--force-clean', '--repo=repo', 'build',
                   'net.tbcproductions.OpalPresenter.yml'], cwd=str(base_path / 'flatpak'))
     if result.returncode != 0:

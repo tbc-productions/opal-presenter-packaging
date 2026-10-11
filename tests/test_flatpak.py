@@ -70,8 +70,9 @@ def test_public_releases_do_not_receive_private_credentials(builder, monkeypatch
 
 
 @pytest.mark.parametrize('codes,success', [
-    ([0, 0, 0, 0, 0, 0], True), ([1], False), ([0, 1], False), ([0, 0, 1], False),
+    ([0, 0, 0, 0, 0, 0, 0, 0], True), ([1], False), ([0, 1], False), ([0, 0, 1], False),
     ([0, 0, 0, 1], False), ([0, 0, 0, 0, 1], False), ([0, 0, 0, 0, 0, 1], False),
+    ([0, 0, 0, 0, 0, 0, 1], False), ([0, 0, 0, 0, 0, 0, 0, 1], False),
 ])
 def test_successful_bundle_returns_true(builder, monkeypatch, tmp_path, codes, success):
     (tmp_path / 'flatpak').mkdir()
@@ -108,6 +109,10 @@ def test_dependencies_come_from_the_tagged_project_and_matching_sdk(builder, mon
     assert str(source / 'pyproject.toml') in calls[1]
     assert '--ignore-pkg' in calls[1] and 'FluentQt' in calls[1]
     assert builder.RUNTIME in calls[1]
+    assert "--stop-at=OpalPresenter" in calls[3]
+    assert "--runtime" in calls[4]
+    assert "QtWebEngineCore" in calls[4][-1]
+    assert "--install" in calls[5]
     assert 'Qt 6.11.1 passed' in calls[-2][-1]
     assert 'OpalPresenter-4.0.4a3-1.flatpak' in calls[-1]
     assert '--runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo' in calls[-1]
