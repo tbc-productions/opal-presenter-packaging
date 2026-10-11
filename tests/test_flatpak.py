@@ -103,6 +103,7 @@ def test_dependencies_come_from_the_tagged_project_and_matching_sdk(builder, mon
     monkeypatch.setattr(builder, 'run', run)
     assert builder.build_flatpak('4.0.4a3', '1', source)
     assert 'linux_gcc_64' in calls[0]
+    assert 'icu' in calls[0]
     assert '--pyproject-file' in calls[1]
     assert str(source / 'pyproject.toml') in calls[1]
     assert '--ignore-pkg' in calls[1] and 'FluentQt' in calls[1]
@@ -110,6 +111,20 @@ def test_dependencies_come_from_the_tagged_project_and_matching_sdk(builder, mon
     assert 'Qt 6.11.1 passed' in calls[-2][-1]
     assert 'OpalPresenter-4.0.4a3-1.flatpak' in calls[-1]
     assert '--runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo' in calls[-1]
+
+
+def test_source_selection_rejects_python2_eggs(builder, monkeypatch, tmp_path):
+    (tmp_path / 'flatpak').mkdir()
+    generator = ('files = [{"filename": "odfpy-1.4.1-py2.7.egg", "packagetype": "bdist_egg"},\n'
+                 '         {"filename": "odfpy-1.4.1.tar.gz", "packagetype": "sdist"}]\n'
+                 'def find_sdist():\n'
+                 '    return next((f for f in files if not f["filename"].endswith(".whl")), None)\n')
+    monkeypatch.setattr(builder, 'get_base_path', lambda: tmp_path)
+    monkeypatch.setattr(builder.requests, 'get', lambda *args, **kwargs: Mock(text=generator))
+    monkeypatch.setattr(builder, 'run', Mock(return_value=SimpleNamespace(returncode=0)))
+    assert builder.build_flatpak('4.0.4a3', '1')
+    generated = builder.runpy.run_path(str(tmp_path / 'flatpak/flatpak-pip-generator'))
+    assert generated['find_sdist']()['filename'] == 'odfpy-1.4.1.tar.gz'
 
 
 def test_native_sources_keep_the_tagged_fluent_revision(builder, monkeypatch, tmp_path):

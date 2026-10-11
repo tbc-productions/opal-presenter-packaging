@@ -200,9 +200,12 @@ def build_flatpak(version: str, bundle: str, source_path: Path | None = None):
     response = requests.get(FPG_URL, timeout=30)
     response.raise_for_status()
     fpg_path = base_path.joinpath('flatpak', 'flatpak-pip-generator')
+    # shortcut: use SDK pip's vendored wheel tags until the SDK exposes packaging.
+    generator = response.text.replace('from packaging import tags;', 'from pip._vendor.packaging import tags;')
+    # Old Python 2 eggs are binary archives, never usable source distributions.
+    generator = generator.replace('if not f["filename"].endswith(".whl")', 'if f["packagetype"] == "sdist"')
     with fpg_path.open('w') as fpg:
-        # shortcut: use SDK pip's vendored wheel tags until the SDK exposes packaging.
-        fpg.write(response.text.replace('from packaging import tags;', 'from pip._vendor.packaging import tags;'))
+        fpg.write(generator)
     runtime_options = ['--runtime', RUNTIME, '--wheel-arches', 'x86_64', '--prefer-wheels',
                        'PySide6,PySide6-Addons,PySide6-Essentials,shiboken6,shiboken6-generator,PySide6-QtAds,'
                        'numpy,pillow,lxml,imagecodecs,imageio-ffmpeg,patchelf']
@@ -213,7 +216,7 @@ def build_flatpak(version: str, bundle: str, source_path: Path | None = None):
         dependencies = ['--pyproject-file', str(source_path.resolve() / 'pyproject.toml'), '--ignore-pkg', 'FluentQt']
         config = runpy.run_path(str(source_path / 'scripts/build_fluentqt.py'))
     result = run([sys.executable, '-m', 'aqt', 'install-qt', 'linux', 'desktop',
-                  config['QT_VERSION'], 'linux_gcc_64', '--archives', 'qtbase',
+                  config['QT_VERSION'], 'linux_gcc_64', '--archives', 'qtbase', 'icu',
                   '-O', str(base_path / 'flatpak' / 'qt')])
     if result.returncode != 0:
         return False
