@@ -2,6 +2,8 @@ app-id: net.tbcproductions.OpalPresenter
 runtime: org.freedesktop.Platform
 runtime-version: '26.08'
 sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.llvm22
 command: opal-presenter
 build-options:
   env:
@@ -31,6 +33,7 @@ modules:
     buildsystem: simple
     build-options:
       env:
+        LLVM_INSTALL_DIR: /usr/lib/sdk/llvm22
         PIP_PREFIX: /app
         PIP_IGNORE_INSTALLED: '0'
     build-commands:

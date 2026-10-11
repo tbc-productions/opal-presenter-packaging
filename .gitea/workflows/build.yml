@@ -178,7 +178,7 @@ jobs:
           python3 -m venv .venv
           .venv/bin/python -m pip install requests ruamel.yaml lxml requirements-parser packaging aqtinstall
           flatpak --user remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-          flatpak --user install -y --noninteractive --or-update flathub org.freedesktop.Sdk//26.08 org.freedesktop.Platform//26.08
+          flatpak --user install -y --noninteractive --or-update flathub org.freedesktop.Sdk//26.08 org.freedesktop.Platform//26.08 org.freedesktop.Sdk.Extension.llvm22//26.08
           flatpak --user run --devel --command=python3 org.freedesktop.Sdk//26.08 -c 'import sys; from pip._vendor.packaging import tags; assert sys.version_info[:2] == (3, 14), sys.version; assert any(tag.interpreter == "cp314" for tag in tags.sys_tags())'
 
       - name: Check out opal-presenter at tag
