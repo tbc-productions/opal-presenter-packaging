@@ -1,26 +1,32 @@
-# Note:
-# PySide* packages is missing due to being included in the base flatpak image
-# psycopg2 install required postgres installed, so skipped...
+# Fallback for public-tag builds. CI derives dependencies from the tagged pyproject.toml.
+imageio-ffmpeg >= 0.6, < 0.7
 alembic
 beautifulsoup4
 chardet
 distro
 flask
 flask-cors
+imagecodecs
 lxml
 Mako
+numpy
+pillow >= 12.3.0
 platformdirs
 PyICU
+python-pptx
+odfpy
+PySide6 == 6.11.1
+PySide6-QtAds == 5.0.0.2
 QtAwesome
 qrcode
 requests
 SQLAlchemy
 waitress
 websockets
-QDarkStyle
 packaging
 PyMySQL
 pyenchant
 pysword
-pytest
-pytest-runner
+websocket-client
+hatchling
+hatch-vcs

@@ -50,7 +50,9 @@ def test_manifest_uses_authenticated_checkout(builder, monkeypatch, tmp_path):
     source = tmp_path / 'source'
     builder.update_build_yml('4.0.4', '', '', source)
     sources = YAML().load(manifest)['modules'][0]['sources']
-    assert sources == [{'type': 'dir', 'path': str(source)}, {'type': 'file', 'path': 'metadata.xml'}]
+    assert sources == [{'type': 'dir', 'path': str(source), 'skip': ['.git', '.venv', '.cache', 'build', 'dist']},
+                       {'type': 'file', 'path': 'metadata.xml'}]
+    assert YAML().load(manifest)['modules'][0]['build-options']['env']['SETUPTOOLS_SCM_PRETEND_VERSION'] == '4.0.4'
 
 
 def test_public_releases_do_not_receive_private_credentials(builder, monkeypatch):
@@ -67,11 +69,14 @@ def test_public_releases_do_not_receive_private_credentials(builder, monkeypatch
     response.raise_for_status.assert_called_once()
 
 
-@pytest.mark.parametrize('codes,success', [([0, 0, 0], True), ([1], False), ([0, 1], False), ([0, 0, 1], False)])
+@pytest.mark.parametrize('codes,success', [
+    ([0, 0, 0, 0, 0, 0], True), ([1], False), ([0, 1], False), ([0, 0, 1], False),
+    ([0, 0, 0, 1], False), ([0, 0, 0, 0, 1], False), ([0, 0, 0, 0, 0, 1], False),
+])
 def test_successful_bundle_returns_true(builder, monkeypatch, tmp_path, codes, success):
     (tmp_path / 'flatpak').mkdir()
     monkeypatch.setattr(builder, 'get_base_path', lambda: tmp_path)
-    monkeypatch.setattr(builder.requests, 'get', lambda *args: SimpleNamespace(text='generator'))
+    monkeypatch.setattr(builder.requests, 'get', lambda *args, **kwargs: Mock(text='generator'))
     calls = []
 
     def run(*args, **kwargs):
@@ -80,3 +85,47 @@ def test_successful_bundle_returns_true(builder, monkeypatch, tmp_path, codes, s
     monkeypatch.setattr(builder, 'run', run)
     assert builder.build_flatpak('4.0.4', '1') is success
     assert len(calls) == len(codes)
+
+
+def test_dependencies_come_from_the_tagged_project_and_matching_sdk(builder, monkeypatch, tmp_path):
+    (tmp_path / 'flatpak').mkdir()
+    source = tmp_path / 'source'
+    (source / 'scripts').mkdir(parents=True)
+    (source / 'scripts/build_fluentqt.py').write_text('QT_VERSION = "6.11.1"\n')
+    monkeypatch.setattr(builder, 'get_base_path', lambda: tmp_path)
+    monkeypatch.setattr(builder.requests, 'get', lambda *args, **kwargs: Mock(text='generator'))
+    calls = []
+
+    def run(args, **kwargs):
+        calls.append(args)
+        return SimpleNamespace(returncode=0)
+    monkeypatch.setattr(builder, 'run', run)
+    assert builder.build_flatpak('4.0.4a3', '1', source)
+    assert 'linux_gcc_64' in calls[0]
+    assert '--pyproject-file' in calls[1]
+    assert str(source / 'pyproject.toml') in calls[1]
+    assert '--ignore-pkg' in calls[1] and 'FluentQt' in calls[1]
+    assert builder.RUNTIME in calls[1]
+    assert 'Qt 6.11.1 passed' in calls[-2][-1]
+    assert 'OpalPresenter-4.0.4a3-1.flatpak' in calls[-1]
+
+
+def test_native_sources_keep_the_tagged_fluent_revision(builder, monkeypatch, tmp_path):
+    flatpak = tmp_path / 'flatpak'
+    flatpak.mkdir()
+    manifest = flatpak / 'net.tbcproductions.OpalPresenter.yml'
+    manifest.write_text('modules:\n  - name: OpalPresenter\n    sources:\n'
+                        '      - type: git\n        url: https://example.invalid/opal.git\n        tag: old\n'
+                        '      - type: dir\n        path: qt\n        dest: qt\n'
+                        '      - type: git\n        url: old\n        commit: old\n        dest: fluentqt\n')
+    source = tmp_path / 'source'
+    (source / 'scripts').mkdir(parents=True)
+    (source / 'scripts/build_fluentqt.py').write_text(
+        'SOURCE_URL="https://example.invalid/fluent.git"\nSOURCE_REVISION="pinned-revision"\n')
+    monkeypatch.setattr(builder, 'get_base_path', lambda: tmp_path)
+    builder.update_build_yml('4.0.4a3', '', '', source)
+    sources = YAML().load(manifest)['modules'][0]['sources']
+    assert sources[0]['path'] == str(source)
+    assert sources[1] == {'type': 'dir', 'path': str(flatpak / 'qt'), 'dest': 'qt'}
+    assert sources[2] == {'type': 'git', 'url': 'https://example.invalid/fluent.git',
+                          'commit': 'pinned-revision', 'dest': 'fluentqt'}

@@ -60,6 +60,7 @@ the Opal Presenter repository, and run the script the following way:
 This generates a flatpak in the "flatpak" directory.
 """
 import os
+import runpy
 import sys
 from argparse import ArgumentParser, Namespace
 from datetime import date
@@ -72,7 +73,8 @@ from lxml import etree, objectify
 from ruamel.yaml import YAML
 
 
-FPG_URL = 'https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/pip/flatpak-pip-generator'
+FPG_URL = 'https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/pip/flatpak-pip-generator.py'
+RUNTIME = 'org.freedesktop.Sdk//26.08'
 IGNORE_VERSIONS = ['3.1.5', '3.1.4', '3.1.0', '3.1.0rc4', '3.1.0rc3', '3.1.0rc2', '3.1.0rc1', '3.0.2', '3.0.1',
                    '3.0.0', '2.9.5', '2.9.4', '2.9.3', '2.9.2', '2.9.1', '2.9.0']
 
@@ -168,35 +170,71 @@ def update_build_yml(version: str, version_url: str, sha256_hash: str, source_pa
     yaml = get_yaml()
     build_file = get_base_path().joinpath('flatpak', 'net.tbcproductions.OpalPresenter.yml')
     with build_file.open('r') as fd:
-        openlp_yml = yaml.load(fd)
-    for module in openlp_yml['modules']:
+        opal_yml = yaml.load(fd)
+    for module in opal_yml['modules']:
         if isinstance(module, dict) and module['name'] == 'OpalPresenter':
+            module.setdefault('build-options', {}).setdefault('env', {})['SETUPTOOLS_SCM_PRETEND_VERSION'] = version
             for source in module['sources']:
-                if source_path is not None and source['type'] in ('git', 'archive', 'dir'):
+                if source.get('dest') == 'fluentqt':
+                    if source_path is not None:
+                        config = runpy.run_path(str(source_path / 'scripts/build_fluentqt.py'))
+                        source.update(url=config['SOURCE_URL'], commit=config['SOURCE_REVISION'])
+                elif source.get('dest') == 'qt':
+                    source['path'] = str(get_base_path().joinpath('flatpak', 'qt').resolve())
+                elif source_path is not None and source['type'] in ('git', 'archive', 'dir'):
                     source.clear()
-                    source.update(type='dir', path=str(source_path.resolve()))
+                    source.update(type='dir', path=str(source_path.resolve()),
+                                  skip=['.git', '.venv', '.cache', 'build', 'dist'])
                 elif source['type'] == 'git':
                     source['tag'] = version
                 elif source['type'] == 'archive':
                     source['url'] = version_url
                     source['sha256'] = sha256_hash
-    yaml.dump(openlp_yml, build_file)
+    yaml.dump(opal_yml, build_file)
     return True
 
 
-def build_flatpak(version: str, bundle: str):
+def build_flatpak(version: str, bundle: str, source_path: Path | None = None):
     """Build the flatpak"""
     base_path = get_base_path()
-    response = requests.get(FPG_URL)
+    response = requests.get(FPG_URL, timeout=30)
+    response.raise_for_status()
     fpg_path = base_path.joinpath('flatpak', 'flatpak-pip-generator')
     with fpg_path.open('w') as fpg:
         fpg.write(response.text)
-    result = run([sys.executable, str(fpg_path), '--requirements-file', 'requirements.txt'],
-                 cwd=str(base_path / 'flatpak'))
+    runtime_options = ['--runtime', RUNTIME, '--wheel-arches', 'x86_64', '--prefer-wheels',
+                       'PySide6,PySide6-Addons,PySide6-Essentials,shiboken6,shiboken6-generator,PySide6-QtAds,'
+                       'numpy,pillow,lxml,imagecodecs,imageio-ffmpeg,patchelf']
+    env = dict(os.environ, FLATPAK_PIP_GENERATOR_ALLOW_RESTRICTED_MODULES='1')
+    dependencies = ['--requirements-file', 'requirements.txt']
+    config = {'QT_VERSION': '6.11.1'}
+    if source_path is not None:
+        dependencies = ['--pyproject-file', str(source_path.resolve() / 'pyproject.toml'), '--ignore-pkg', 'FluentQt']
+        config = runpy.run_path(str(source_path / 'scripts/build_fluentqt.py'))
+    result = run([sys.executable, '-m', 'aqt', 'install-qt', 'linux', 'desktop',
+                  config['QT_VERSION'], 'linux_gcc_64', '--archives', 'qtbase',
+                  '-O', str(base_path / 'flatpak' / 'qt')])
+    if result.returncode != 0:
+        return False
+    result = run([sys.executable, str(fpg_path), *dependencies, *runtime_options,
+                  '--output', 'python3-requirements'], cwd=str(base_path / 'flatpak'), env=env)
+    if result.returncode != 0:
+        return False
+    result = run([sys.executable, str(fpg_path), 'shiboken6_generator==6.11.1', 'pip', 'wheel', 'setuptools',
+                  'patchelf', *runtime_options, '--output', 'python3-native-build'],
+                 cwd=str(base_path / 'flatpak'), env=env)
     if result.returncode != 0:
         return False
     result = run(['flatpak-builder', '--user', '--install', '--force-clean', '--repo=repo', 'build',
                   'net.tbcproductions.OpalPresenter.yml'], cwd=str(base_path / 'flatpak'))
+    if result.returncode != 0:
+        return False
+    result = run(['flatpak', '--user', 'run', '--command=python3', '--env=QT_QPA_PLATFORM=offscreen',
+                  'net.tbcproductions.OpalPresenter', '-c',
+                  'import sys, opal.core.app, fluentqt; from PySide6 import QtCore, QtWidgets, QtWebEngineWidgets; '
+                  'assert sys.version_info[:2] == (3, 14); assert QtCore.qVersion() == "6.11.1"; '
+                  'app = QtWidgets.QApplication([]); assert fluentqt.Button("Opal"); '
+                  'assert QtWebEngineWidgets.QWebEngineView; print("Flatpak startup imports and Qt 6.11.1 passed")'])
     if result.returncode != 0:
         return False
     result = run(['flatpak', 'build-bundle', 'repo', f'OpalPresenter-{version}-{bundle}.flatpak',
@@ -236,7 +274,7 @@ def main() -> int:
     if not update_build_yml(args.version, version_url, sha256_hash, args.branch):
         print('Unable to build YAML file, aborting...')
         return 5
-    if not build_flatpak(args.version, args.bundle):
+    if not build_flatpak(args.version, args.bundle, args.branch):
         return 6
     return 0
 

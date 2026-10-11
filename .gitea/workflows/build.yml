@@ -164,11 +164,22 @@ jobs:
     # Let an online runner mark disabled builds skipped.
     runs-on: ${{ ((github.event_name == 'workflow_dispatch' && github.event.inputs.build_flatpak == 'true') || (github.event_name == 'repository_dispatch' && github.event.client_payload.build_flatpak == true)) && 'flatpak-builder' || 'ubuntu-latest' }}
     container:
-      image: bilelmoussaoui/flatpak-github-actions:gnome-46
+      image: node:22-bookworm
       options: --privileged
     steps:
       - name: Check out packaging repo
         uses: actions/checkout@v4
+
+      - name: Install Flatpak tooling
+        run: |
+          set -euo pipefail
+          apt-get update
+          apt-get install -y --no-install-recommends ca-certificates curl git flatpak flatpak-builder python3 python3-venv
+          python3 -m venv .venv
+          .venv/bin/python -m pip install requests ruamel.yaml lxml requirements-parser packaging aqtinstall
+          flatpak --user remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak --user install -y --noninteractive flathub org.freedesktop.Sdk//26.08 org.freedesktop.Platform//26.08
+          flatpak --user run --command=python3 org.freedesktop.Sdk//26.08 -c 'import sys; assert sys.version_info[:2] == (3, 14), sys.version'
 
       - name: Check out opal-presenter at tag
         uses: actions/checkout@v4
@@ -185,8 +196,10 @@ jobs:
           echo -n "${{ needs.prepare-source.outputs.version }}" > source/opal/.version
 
       - name: Build Flatpak
+        env:
+          PYTHONUNBUFFERED: "1"
         run: |
-          python3 builders/flatpak-builder.py \
+          .venv/bin/python builders/flatpak-builder.py \
             --branch "$(pwd)/source" \
             "${{ needs.prepare-source.outputs.version }}"
 
