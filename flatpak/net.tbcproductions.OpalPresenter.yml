@@ -16,6 +16,17 @@ finish-args:
 modules:
   - python3-requirements.json
   - python3-native-build.json
+  - name: opal-generator-libxml2
+    buildsystem: autotools
+    config-opts:
+      - --without-python
+      - --disable-static
+    cleanup:
+      - '*'
+    sources:
+      - type: archive
+        url: https://download.gnome.org/sources/libxml2/2.13/libxml2-2.13.9.tar.xz
+        sha256: a2c9ae7b770da34860050c309f903221c67830c86e4a7e760692b803df95143a
   - name: OpalPresenter
     buildsystem: simple
     build-options:

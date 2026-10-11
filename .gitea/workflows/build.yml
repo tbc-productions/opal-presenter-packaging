@@ -165,7 +165,7 @@ jobs:
     runs-on: ${{ ((github.event_name == 'workflow_dispatch' && github.event.inputs.build_flatpak == 'true') || (github.event_name == 'repository_dispatch' && github.event.client_payload.build_flatpak == true)) && 'flatpak-builder' || 'ubuntu-latest' }}
     container:
       image: node:22-bookworm
-      options: --privileged
+      options: --privileged -v opal-flatpak-runtimes:/root/.local/share/flatpak -v opal-flatpak-build-cache:/var/cache/opal-flatpak-builder
     steps:
       - name: Check out packaging repo
         uses: actions/checkout@v4
@@ -177,8 +177,9 @@ jobs:
           apt-get install -y --no-install-recommends ca-certificates curl git elfutils flatpak flatpak-builder python3 python3-venv
           python3 -m venv .venv
           .venv/bin/python -m pip install requests ruamel.yaml lxml requirements-parser packaging aqtinstall
+          ln -s /var/cache/opal-flatpak-builder flatpak/.flatpak-builder
           flatpak --user remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-          flatpak --user install -y --noninteractive flathub org.freedesktop.Sdk//26.08 org.freedesktop.Platform//26.08
+          flatpak --user install -y --noninteractive --or-update flathub org.freedesktop.Sdk//26.08 org.freedesktop.Platform//26.08
           flatpak --user run --devel --command=python3 org.freedesktop.Sdk//26.08 -c 'import sys; from pip._vendor.packaging import tags; assert sys.version_info[:2] == (3, 14), sys.version; assert any(tag.interpreter == "cp314" for tag in tags.sys_tags())'
 
       - name: Check out opal-presenter at tag
