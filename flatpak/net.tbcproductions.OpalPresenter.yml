@@ -3,6 +3,9 @@ runtime: org.freedesktop.Platform
 runtime-version: '26.08'
 sdk: org.freedesktop.Sdk
 command: opal-presenter
+build-options:
+  env:
+    PIP_IGNORE_INSTALLED: '1'
 finish-args:
   - --socket=x11
   - --share=ipc
@@ -11,20 +14,14 @@ finish-args:
   - --socket=pulseaudio
   - --filesystem=host
 modules:
-  - name: opal-python-dependencies
-    buildsystem: simple
-    build-commands: []
-    build-options:
-      env:
-        PIP_IGNORE_INSTALLED: '1'
-    modules:
-      - python3-requirements.json
-      - python3-native-build.json
+  - python3-requirements.json
+  - python3-native-build.json
   - name: OpalPresenter
     buildsystem: simple
     build-options:
       env:
         PIP_PREFIX: /app
+        PIP_IGNORE_INSTALLED: '0'
     build-commands:
       - python3 scripts/build_fluentqt.py --qt-prefix qt/6.11.1/gcc_64 --source fluentqt --install
       - patchelf --set-rpath '$ORIGIN/../PySide6/Qt/lib' /app/lib/python3.14/site-packages/fluentqt/_fluentqt.so
