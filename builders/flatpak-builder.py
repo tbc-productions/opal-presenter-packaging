@@ -129,7 +129,7 @@ def get_releases(project_id: str, api_token: str, token_type: str) -> list[tuple
 
 def get_version_url(version: str, releases: list[tuple]) -> str:
     """Loop through the releases and get the link to the tarball for the selected version"""
-    for (tag, date, url) in releases:
+    for (tag, _, url) in releases:
         if tag == version:
             return url
     return ''

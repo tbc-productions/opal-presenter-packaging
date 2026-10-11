@@ -200,12 +200,15 @@ class WindowsBuilder(Builder):
                                                            Protocol='udp', Scope='any'))
                     component.append(E.Shortcut(Id='ApplicationStartMenuShortcut', Name='$(var.ProductName)',
                                                 Description='$(var.Description)', Directory='ProgramMenuDir',
-                                                Icon='OpalPresenter.ico', Advertise='yes', WorkingDirectory='INSTALLDIR'))
+                                                Icon='OpalPresenter.ico', Advertise='yes',
+                                                WorkingDirectory='INSTALLDIR'))
                     component.append(E.Shortcut(Id='DebugStartMenuShortcut', Name='$(var.ProductName) (Debug)',
                                                 Description='Run $(var.ProductName) with debug logging enabled',
                                                 Directory='ProgramMenuDir', Arguments='--log-level debug',
-                                                Icon='OpalPresenter.ico', Advertise='yes', WorkingDirectory='INSTALLDIR'))
-                    for kind in ('service', 'service-lite', 'song', 'slides', 'theme', 'settings', 'styles', 'connection'):
+                                                Icon='OpalPresenter.ico', Advertise='yes',
+                                                WorkingDirectory='INSTALLDIR'))
+                    for kind in ('service', 'service-lite', 'song', 'slides', 'theme', 'settings', 'styles',
+                                 'connection'):
                         component.append(E.ProgId(
                             E.Extension(
                                 E.Verb(Id="Open", Command="Open", Argument=" &quot;%1&quot;"),

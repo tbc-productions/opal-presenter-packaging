@@ -43,7 +43,9 @@ def test_manifest_uses_authenticated_checkout(builder, monkeypatch, tmp_path):
     flatpak = tmp_path / 'flatpak'
     flatpak.mkdir()
     manifest = flatpak / 'net.tbcproductions.OpalPresenter.yml'
-    manifest.write_text("modules:\n  - name: OpalPresenter\n    sources:\n      - type: git\n        url: https://example.invalid/source.git\n        tag: old\n      - type: file\n        path: metadata.xml\n")
+    manifest.write_text("modules:\n  - name: OpalPresenter\n    sources:\n      - type: git\n"
+                        "        url: https://example.invalid/source.git\n        tag: old\n"
+                        "      - type: file\n        path: metadata.xml\n")
     monkeypatch.setattr(builder, 'get_base_path', lambda: tmp_path)
     source = tmp_path / 'source'
     builder.update_build_yml('4.0.4', '', '', source)
@@ -71,6 +73,7 @@ def test_successful_bundle_returns_true(builder, monkeypatch, tmp_path, codes, s
     monkeypatch.setattr(builder, 'get_base_path', lambda: tmp_path)
     monkeypatch.setattr(builder.requests, 'get', lambda *args: SimpleNamespace(text='generator'))
     calls = []
+
     def run(*args, **kwargs):
         calls.append(args)
         return SimpleNamespace(returncode=codes[len(calls) - 1])
