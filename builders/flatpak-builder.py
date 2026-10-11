@@ -237,7 +237,8 @@ def build_flatpak(version: str, bundle: str, source_path: Path | None = None):
                   'assert QtWebEngineWidgets.QWebEngineView; print("Flatpak startup imports and Qt 6.11.1 passed")'])
     if result.returncode != 0:
         return False
-    result = run(['flatpak', 'build-bundle', 'repo', f'OpalPresenter-{version}-{bundle}.flatpak',
+    result = run(['flatpak', 'build-bundle', '--runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo',
+                  'repo', f'OpalPresenter-{version}-{bundle}.flatpak',
                   'net.tbcproductions.OpalPresenter'],
                  cwd=str(base_path / 'flatpak'))
     if result.returncode != 0:

@@ -108,6 +108,7 @@ def test_dependencies_come_from_the_tagged_project_and_matching_sdk(builder, mon
     assert builder.RUNTIME in calls[1]
     assert 'Qt 6.11.1 passed' in calls[-2][-1]
     assert 'OpalPresenter-4.0.4a3-1.flatpak' in calls[-1]
+    assert '--runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo' in calls[-1]
 
 
 def test_native_sources_keep_the_tagged_fluent_revision(builder, monkeypatch, tmp_path):
