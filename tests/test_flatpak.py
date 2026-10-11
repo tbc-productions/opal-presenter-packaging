@@ -18,7 +18,7 @@ def builder():
 
 
 def test_workflow_checkout_routes_without_published_release(builder, monkeypatch, tmp_path):
-    (tmp_path / 'openlp').mkdir()
+    (tmp_path / 'opal').mkdir()
     (tmp_path / 'pyproject.toml').touch()
     monkeypatch.setattr('sys.argv', ['flatpak-builder.py', '--branch', str(tmp_path), '4.0.4'])
     monkeypatch.setattr(builder, 'get_releases', Mock(side_effect=AssertionError('No release lookup required')))

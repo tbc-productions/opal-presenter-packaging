@@ -334,13 +334,13 @@ class Builder(object):
             self.work_path = os.path.abspath(os.path.join(self.branch_path, '..', 'Opal Presenter-' + self.version))
         else:
             self.work_path = self.branch_path
-        self.openlp_script = os.path.abspath(os.path.join(self.work_path, 'openlp', '__main__.py'))
-        self.source_path = os.path.join(self.work_path, 'openlp')
+        self.opal_script = os.path.abspath(os.path.join(self.work_path, 'opal', '__main__.py'))
+        self.source_path = os.path.join(self.work_path, 'opal')
         self.i18n_utils = os.path.join(self.work_path, 'scripts', 'translation_utils.py')
         self.i18n_path = os.path.join(self.work_path, 'resources', 'i18n')
         self.build_path = os.path.join(self.work_path, 'build')
         # Print out all the values
-        self._print_verbose('   {:.<20} {}'.format('openlp script: ', self.openlp_script))
+        self._print_verbose('   {:.<20} {}'.format('opal script: ', self.opal_script))
         self._print_verbose('   {:.<20} {}'.format('source: ', self.source_path))
         self._print_verbose('   {:.<20} {}'.format('i18n utils: ', self.i18n_utils))
         self._print_verbose('   {:.<20} {}'.format('i18n path: ', self.i18n_path))
@@ -407,7 +407,7 @@ class Builder(object):
                '-i', self.icon_path,
                '-n', 'Opal Presenter',
                *self.get_extra_parameters(),  # Adds any extra parameters we wish to use
-               self.openlp_script
+               self.opal_script
                ]
         if self.args.verbose:
             cmd.append('--log-level=DEBUG')
@@ -615,7 +615,7 @@ class Builder(object):
         """
         The main function to run the builder.
         """
-        self._print_verbose('OpenLP main script: ......%s', self.openlp_script)
+        self._print_verbose('OpenLP main script: ......%s', self.opal_script)
         self._print_verbose('Script path: .............%s', self.script_path)
         self._print_verbose('Branch path: .............%s', self.branch_path)
         self._print_verbose('')

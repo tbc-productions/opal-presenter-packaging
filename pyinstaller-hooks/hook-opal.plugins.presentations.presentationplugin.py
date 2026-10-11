@@ -20,10 +20,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>. #
 ##########################################################################
 
-hiddenimports = ['openlp.plugins.presentations.lib.applescriptbasecontroller',
-                 'openlp.plugins.presentations.lib.impresscontroller',
-                 'openlp.plugins.presentations.lib.keynotecontroller',
-                 'openlp.plugins.presentations.lib.maclocontroller',
-                 'openlp.plugins.presentations.lib.pdfcontroller',
-                 'openlp.plugins.presentations.lib.powerpointcontroller',
-                 'openlp.plugins.presentations.lib.powerpointmaccontroller']
+hiddenimports = ['opal.plugins.presentations.lib.applescriptbasecontroller',
+                 'opal.plugins.presentations.lib.impresscontroller',
+                 'opal.plugins.presentations.lib.keynotecontroller',
+                 'opal.plugins.presentations.lib.maclocontroller',
+                 'opal.plugins.presentations.lib.pdfcontroller',
+                 'opal.plugins.presentations.lib.powerpointcontroller',
+                 'opal.plugins.presentations.lib.powerpointmaccontroller']

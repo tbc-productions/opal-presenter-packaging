@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 1280 1280" role="img" aria-labelledby="title desc">
+  <title id="title">Opal Presenter icon</title>
+  <desc id="desc">Five solid muted blue rounded fans converge on a matching solid circle. Transparent background.</desc>
+  <g transform="translate(640 1130) rotate(-50) scale(0.77 0.74)">
+    <path fill="#4D79B9" d="M 0 0 C -24 -154 -100 -584 -147 -786 C -169 -939 -106 -1040 0 -1040 C 106 -1040 169 -939 147 -786 C 100 -584 24 -154 0 0 Z" />
+  </g>
+  <g transform="translate(640 1130) rotate(-24) scale(0.8 0.85)">
+    <path fill="#4D79B9" d="M 0 0 C -24 -154 -100 -584 -147 -786 C -169 -939 -106 -1040 0 -1040 C 106 -1040 169 -939 147 -786 C 100 -584 24 -154 0 0 Z" />
+  </g>
+  <g transform="translate(640 1130) rotate(0) scale(0.88 1)">
+    <path fill="#4D79B9" d="M 0 0 C -24 -154 -100 -584 -147 -786 C -169 -939 -106 -1040 0 -1040 C 106 -1040 169 -939 147 -786 C 100 -584 24 -154 0 0 Z" />
+  </g>
+  <g transform="translate(640 1130) rotate(24) scale(0.8 0.85)">
+    <path fill="#4D79B9" d="M 0 0 C -24 -154 -100 -584 -147 -786 C -169 -939 -106 -1040 0 -1040 C 106 -1040 169 -939 147 -786 C 100 -584 24 -154 0 0 Z" />
+  </g>
+  <g transform="translate(640 1130) rotate(50) scale(0.77 0.74)">
+    <path fill="#4D79B9" d="M 0 0 C -24 -154 -100 -584 -147 -786 C -169 -939 -106 -1040 0 -1040 C 106 -1040 169 -939 147 -786 C 100 -584 24 -154 0 0 Z" />
+  </g>
+  <circle cx="640" cy="1130" r="68" fill="#4D79B9" />
+</svg>
