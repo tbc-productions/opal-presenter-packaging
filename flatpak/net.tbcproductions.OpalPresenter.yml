@@ -11,8 +11,15 @@ finish-args:
   - --socket=pulseaudio
   - --filesystem=host
 modules:
-  - python3-requirements.json
-  - python3-native-build.json
+  - name: opal-python-dependencies
+    buildsystem: simple
+    build-commands: []
+    build-options:
+      env:
+        PIP_IGNORE_INSTALLED: '1'
+    modules:
+      - python3-requirements.json
+      - python3-native-build.json
   - name: OpalPresenter
     buildsystem: simple
     build-options:

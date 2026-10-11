@@ -174,7 +174,7 @@ jobs:
         run: |
           set -euo pipefail
           apt-get update
-          apt-get install -y --no-install-recommends ca-certificates curl git flatpak flatpak-builder python3 python3-venv
+          apt-get install -y --no-install-recommends ca-certificates curl git elfutils flatpak flatpak-builder python3 python3-venv
           python3 -m venv .venv
           .venv/bin/python -m pip install requests ruamel.yaml lxml requirements-parser packaging aqtinstall
           flatpak --user remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
@@ -188,8 +188,8 @@ jobs:
           ref: refs/tags/${{ needs.prepare-source.outputs.opal_tag }}
           path: source
           token: ${{ secrets.CI_TOKEN }}
-          fetch-depth: 0
-          fetch-tags: true
+          fetch-depth: 1
+          fetch-tags: false
 
       - name: Stamp version file
         run: |
