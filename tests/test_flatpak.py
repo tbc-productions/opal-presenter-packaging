@@ -62,8 +62,8 @@ def test_public_releases_do_not_receive_private_credentials(builder, monkeypatch
     get = Mock(return_value=response)
     monkeypatch.setattr(builder.requests, 'get', get)
     assert builder.get_releases('unused', 'private-token', 'unused') == [
-        ('4.0.4', '2026-10-11', 'https://github.com/tchris3/opal-presenter/archive/refs/tags/4.0.4.tar.gz')]
-    get.assert_called_once_with('https://api.github.com/repos/tchris3/opal-presenter/releases', timeout=30)
+        ('4.0.4', '2026-10-11', 'https://github.com/tbc-productions/opal-presenter/archive/refs/tags/4.0.4.tar.gz')]
+    get.assert_called_once_with('https://api.github.com/repos/tbc-productions/opal-presenter/releases', timeout=30)
     response.raise_for_status.assert_called_once()
 
 

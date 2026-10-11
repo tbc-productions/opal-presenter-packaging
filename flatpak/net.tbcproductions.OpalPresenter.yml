@@ -33,7 +33,7 @@ modules:
       - install -Dm 644 -t /app/share/appdata/ net.tbcproductions.OpalPresenter.appdata.xml
     sources:
       - type: git
-        url: https://github.com/tchris3/opal-presenter.git
+        url: https://github.com/tbc-productions/opal-presenter.git
         tag: 4.0.4
       - type: file
         path: net.tbcproductions.OpalPresenter.appdata.xml

@@ -73,10 +73,10 @@
             <RegistryValue Root="HKCU" Key="Software\$(var.QtSettingsOrg)\$(var.QtSettingsApp)" Type="string" Value="" KeyPath="yes" />
             <util:InternetShortcut Id="OpalPresenterWebSite"
               Name="$(var.ProductName) on the Web"
-              Target="https://github.com/tchris3/opal-presenter"/>
+              Target="https://github.com/tbc-productions/opal-presenter"/>
             <util:InternetShortcut Id="OpalPresenterForums"
               Name="Get support for $(var.ProductName)"
-              Target="https://github.com/tchris3/opal-presenter/issues"/>
+              Target="https://github.com/tbc-productions/opal-presenter/issues"/>
             <Shortcut Id="UninstallProduct"             
               Name="Uninstall $(var.ProductName)"
               Target="[%(systemfolder)s]msiexec.exe"

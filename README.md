@@ -1,13 +1,12 @@
 # opal-presenter-packaging
 
-Packaging and CI for [Opal Presenter](https://github.com/tchris3/opal-presenter),
+Packaging and CI for [Opal Presenter](https://github.com/tbc-productions/opal-presenter),
 a fork of [OpenLP](https://openlp.org/). This repository does not contain
 application source — it produces installable artifacts (macOS `.dmg`,
 Windows `.msi` / portable `.exe`, Linux Flatpak) from the `opal-presenter`
 source at a given tag.
 
-Plugins live in a separate repo,
-[opal-presenter-plugins](https://github.com/tchris3/opal-presenter-plugins),
+Plugins live in the separate `opal-presenter-plugins` repository
 and are shipped as a source ZIP from their own release workflow. They are
 **not** bundled into Opal Presenter builds; users install plugins manually by
 dropping directories into `openlp/plugins/` inside an Opal Presenter install.

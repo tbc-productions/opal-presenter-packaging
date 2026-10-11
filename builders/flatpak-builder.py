@@ -119,11 +119,11 @@ def get_releases(project_id: str, api_token: str, token_type: str) -> list[tuple
 
     :return: A list of tuples, in the format (tag, date, link-to-tarball)
     """
-    response = requests.get('https://api.github.com/repos/tchris3/opal-presenter/releases',
+    response = requests.get('https://api.github.com/repos/tbc-productions/opal-presenter/releases',
                             timeout=30)
     response.raise_for_status()
     return [(release['tag_name'], release['published_at'][:10],
-             'https://github.com/tchris3/opal-presenter/archive/refs/tags/' + release['tag_name'] + '.tar.gz')
+             'https://github.com/tbc-productions/opal-presenter/archive/refs/tags/' + release['tag_name'] + '.tar.gz')
             for release in response.json() if not release.get('draft') and not release.get('prerelease')]
 
 
