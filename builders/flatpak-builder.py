@@ -201,7 +201,8 @@ def build_flatpak(version: str, bundle: str, source_path: Path | None = None):
     response.raise_for_status()
     fpg_path = base_path.joinpath('flatpak', 'flatpak-pip-generator')
     with fpg_path.open('w') as fpg:
-        fpg.write(response.text)
+        # shortcut: use SDK pip's vendored wheel tags until the SDK exposes packaging.
+        fpg.write(response.text.replace('from packaging import tags;', 'from pip._vendor.packaging import tags;'))
     runtime_options = ['--runtime', RUNTIME, '--wheel-arches', 'x86_64', '--prefer-wheels',
                        'PySide6,PySide6-Addons,PySide6-Essentials,shiboken6,shiboken6-generator,PySide6-QtAds,'
                        'numpy,pillow,lxml,imagecodecs,imageio-ffmpeg,patchelf']

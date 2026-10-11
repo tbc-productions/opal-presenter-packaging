@@ -76,7 +76,7 @@ def test_public_releases_do_not_receive_private_credentials(builder, monkeypatch
 def test_successful_bundle_returns_true(builder, monkeypatch, tmp_path, codes, success):
     (tmp_path / 'flatpak').mkdir()
     monkeypatch.setattr(builder, 'get_base_path', lambda: tmp_path)
-    monkeypatch.setattr(builder.requests, 'get', lambda *args, **kwargs: Mock(text='generator'))
+    monkeypatch.setattr(builder.requests, 'get', lambda *args, **kwargs: Mock(text='from packaging import tags;'))
     calls = []
 
     def run(*args, **kwargs):
@@ -85,6 +85,7 @@ def test_successful_bundle_returns_true(builder, monkeypatch, tmp_path, codes, s
     monkeypatch.setattr(builder, 'run', run)
     assert builder.build_flatpak('4.0.4', '1') is success
     assert len(calls) == len(codes)
+    assert (tmp_path / 'flatpak/flatpak-pip-generator').read_text() == 'from pip._vendor.packaging import tags;'
 
 
 def test_dependencies_come_from_the_tagged_project_and_matching_sdk(builder, monkeypatch, tmp_path):
