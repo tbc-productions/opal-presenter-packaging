@@ -20,9 +20,6 @@ modules:
   - python3-native-build.json
   - name: opal-kerberos
     buildsystem: autotools
-    build-options:
-      # Kerberos 1.22.2 predates the C23 const-preserving string functions.
-      cflags: -std=gnu17
     subdir: src
     config-opts:
       - --without-keyutils
@@ -37,6 +34,9 @@ modules:
       - type: archive
         url: https://kerberos.org/dist/krb5/1.22/krb5-1.22.2.tar.gz
         sha256: 3243ffbc8ea4d4ac22ddc7dd2a1dc54c57874c40648b60ff97009763554eaf13
+      - type: patch
+        url: https://github.com/krb5/krb5/commit/ad4dcf1856dadc4b352b5c8ff08e51c7290fb41f.patch
+        sha256: de952714a74db2c65618abd0fa0fb70b0a836a2cd3390ac0ff77ecec2d8fd43e
   - name: opal-generator-libxml2
     buildsystem: autotools
     config-opts:
