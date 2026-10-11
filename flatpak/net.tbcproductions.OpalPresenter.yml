@@ -20,6 +20,9 @@ modules:
   - python3-native-build.json
   - name: opal-kerberos
     buildsystem: autotools
+    build-options:
+      # Kerberos 1.22.2 predates the C23 const-preserving string functions.
+      cflags: -std=gnu17
     subdir: src
     config-opts:
       - --without-keyutils
