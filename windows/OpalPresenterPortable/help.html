@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en-US">
+<html lang="en-AU">
 <head>
     <meta charset="UTF-8">
     <title>Opal Presenter Portable Help</title>
@@ -15,21 +15,21 @@
             text-align  : center;
         }
         a {
-            color       : #b31616;
+            color       : #4d79b9;
             font-weight : bold;
         }
         a:link, a:visited, a:active {}
         a:hover {
-            color : red;
+            color : #355c94;
         }
         h1, h2, h3, h4, h5, h6 {
             font-family : Arial, sans-serif;
             font-weight : normal;
         }
         h1 {
-            color          : #b31616;
+            color          : #4d79b9;
             font-weight    : bold;
-            letter-spacing : -2px;
+            letter-spacing : -0.5px;
             font-size      : 2.2em;
             border-bottom  : 1px solid silver;
             padding-bottom : 5px;
@@ -62,7 +62,8 @@
             text-align       : left;
             margin-left      : auto;
             margin-right     : auto;
-            width            : 780px;
+            width            : auto;
+            max-width        : 780px;
             background-color : white;
             border-left      : 1px solid black;
             border-right     : 1px solid black;
@@ -70,8 +71,11 @@
             line-height      : 150%;
         }
         .logo {
-            background   : white url("Other/Help/Images/Help_Background_Header.png") repeat-x;
-            width        : 840px;
+            background   : #eaf0f8;
+            padding      : 16px 20px;
+            box-sizing   : border-box;
+            width        : 100%;
+            max-width    : 840px;
             margin-top   : 20px;
             margin-left  : auto;
             margin-right : auto;
@@ -80,8 +84,9 @@
             border-left  : 1px solid black;
         }
         .footer {
-            background   : white url("Other/Help/Images/Help_Background_Footer.png") repeat-x;
-            width        : 840px;
+            background   : #4d79b9;
+            width        : 100%;
+            max-width    : 840px;
             height       : 16px;
             margin-left  : auto;
             margin-right : auto;
@@ -90,10 +95,13 @@
             border-left  : 1px solid black;
         }
         .logo img {
-            padding-left : 0px;
+            width        : 36px;
+            height       : 36px;
+            margin-right : 10px;
+            vertical-align : middle;
             border       : none;
             position     : relative;
-            top          : -4px;
+            top          : 0;
         }
         * html .content { width : 760px; }
         * html .logo, * html .footer { width : 820px; }
@@ -123,13 +131,13 @@
 </head>
 
 <body>
-<div class="logo"><a href="http://portableapps.com/"><img src="Other/Help/Images/Help_Logo_Top.png" alt="PortableApps.com - Your Digital Life, Anywhere"></a></div>
+<div class="logo"><a href="https://git.tbcproductions.net/tbcproductions/opal-presenter"><img src="Other/Help/Images/OpalPresenterIcon.svg" alt="">Opal Presenter</a></div>
 <div class="content">
     <h1 class="hastagline">Opal Presenter Portable Help</h1>
     <h2 class="tagline">Open Lyrics Projection</h2>
     <p>Opal Presenter Portable is the Opal Presenter lyrics presentation program packaged with a PortableApps.com launcher as a <a href="http://portableapps.com/about/what_is_a_portable_app">portable app</a>, so you can manage your services on your iPod, USB flash drive, portable hard drive, etc. It leaves no personal information behind on the machine you run it on, so you can take it with you wherever you go. <a href="https://git.tbcproductions.net/tbcproductions/opal-presenter">Learn more about Opal Presenter...</a></p>
 
-    <p><a href="http://portableapps.com/donate"><img src="Other/Help/Images/Donation_Button.png" style="vertical-align:middle" alt="Make a Donation"></a> - Support PortableApps.com's Hosting and Development</p>
+    <p><a href="http://portableapps.com/donate">Support PortableApps.com</a> - Support PortableApps.com's Hosting and Development</p>
 
     <p><a href="http://portableapps.com/node/32795">PortableApps.com launcher documentation &gt;&gt;</a></p>
     <p><a href="http://portableapps.com/">Get more portable apps at PortableApps.com</a></p>

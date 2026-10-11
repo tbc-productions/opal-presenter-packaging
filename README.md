@@ -123,6 +123,20 @@ python builders/macos-builder.py \
 You'll need the same runtime deps the CI job installs
 (`pyinstaller`, `dmgbuild`, Qt + ICU + enchant system libs, etc.).
 
+## Branding
+
+Refresh the installer artwork from the sibling Opal Presenter checkout:
+
+```bash
+../opal-presenter/.venv/bin/python ../opal-presenter/scripts/update_opal_presenter_logo.py \
+  --packaging .
+```
+
+The PNG supplies large app icons and installer artwork; the SVG supplies small
+icons. Windows artwork leaves room for WiX text, and the macOS background is
+wallpaper only. Installer images contain no text. The exporter updates named branding
+assets and preserves unrelated portable Help images.
+
 ## Licence
 
 GPL-3.0 — see [LICENSE](LICENSE). Inherited from upstream OpenLP.
