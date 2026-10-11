@@ -169,7 +169,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ env.OPAL_REPO }}
-          ref: ${{ needs.prepare-source.outputs.opal_tag }}
+          ref: refs/tags/${{ needs.prepare-source.outputs.opal_tag }}
           path: source
           token: ${{ secrets.CI_TOKEN }}
           fetch-depth: 0
@@ -219,7 +219,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ env.OPAL_REPO }}
-          ref: ${{ needs.prepare-source.outputs.opal_tag }}
+          ref: refs/tags/${{ needs.prepare-source.outputs.opal_tag }}
           path: source
           token: ${{ secrets.CI_TOKEN }}
           fetch-depth: 0
@@ -293,7 +293,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ env.OPAL_REPO }}
-          ref: ${{ needs.prepare-source.outputs.opal_tag }}
+          ref: refs/tags/${{ needs.prepare-source.outputs.opal_tag }}
           path: source
           token: ${{ secrets.CI_TOKEN }}
           fetch-depth: 0
