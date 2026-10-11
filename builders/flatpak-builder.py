@@ -212,7 +212,7 @@ def main() -> int:
     args = parse_args()
     use_environment(args)
     if args.branch:
-        if not (args.branch / 'openlp').is_dir() or not (args.branch / 'pyproject.toml').is_file():
+        if not (args.branch / 'opal').is_dir() or not (args.branch / 'pyproject.toml').is_file():
             print(f'Invalid source checkout: {args.branch}')
             return 2
         releases = [(args.version, date.today().isoformat(), '')]

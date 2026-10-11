@@ -20,16 +20,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>. #
 ##########################################################################
 
-hiddenimports = [
-    'openlp.plugins.songs.songsplugin',
-    'openlp.plugins.bibles.bibleplugin',
-    'openlp.plugins.presentations.presentationplugin',
-    'openlp.plugins.media.mediaplugin',
-    'openlp.plugins.images.imageplugin',
-    'openlp.plugins.custom.customplugin',
-    'openlp.plugins.songusage.songusageplugin',
-    'openlp.plugins.remotes.remoteplugin',
-    'openlp.plugins.alerts.alertsplugin',
-    'openlp.plugins.planningcenter.planningcenterplugin',
-    'openlp.plugins.obs_studio.obs_studio_plugin',
-]
+hiddenimports = ['opal.core.ui.media.systemplayer',
+                 'opal.core.ui.media.vlcplayer',
+                 'opal.core.ui.media.webkitplayer']
